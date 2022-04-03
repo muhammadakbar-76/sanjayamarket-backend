@@ -10,6 +10,7 @@ import { ApiModule } from './api/api.module';
 import { RatingModule } from './rating/rating.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     TransactionModule,
     ApiModule,
     RatingModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

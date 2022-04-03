@@ -10,12 +10,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FoodService } from '../food/food.service';
-import { ApiService } from './api.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { UserService } from '../user/user.service';
 import { LoginDto } from '../user/dto/login.dto';
 import * as bcrypt from 'bcrypt';
-import { JwtAuthGuard } from './jwt-guard';
+import { JwtAuthGuard } from '../auth/jwt-guard';
 import { Public } from '../decorator/public.decorator';
 import { AddTransactionDto } from '../transaction/dto/add-transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
@@ -28,6 +27,7 @@ import { EditOrderDto } from '../transaction/dto/edit-order.dto';
 import { User, UserDocument } from '../user/model/user.model';
 import { RefreshRequestDto } from '../user/dto/refresh-request.dto';
 import { SanitizeMongooseModelInterceptor } from 'nestjs-mongoose-exclude';
+import { AuthService } from '../auth/auth.service';
 
 export interface AuthenticationPayload {
   user: User;
@@ -43,7 +43,7 @@ export interface AuthenticationPayload {
 @UseGuards(JwtAuthGuard)
 export class ApiController {
   constructor(
-    private readonly apiService: ApiService,
+    private readonly authService: AuthService,
     private readonly foodService: FoodService,
     private readonly userService: UserService,
     private readonly transactionService: TransactionService,
@@ -77,8 +77,8 @@ export class ApiController {
     if (isEmailRegistered !== null)
       throw new HttpException('Email already been registered', 400);
     const newUser = await this.userService.register(user);
-    const token = this.apiService.createToken(newUser);
-    const refresh = await this.apiService.generateRefreshToken(
+    const token = this.authService.createToken(newUser);
+    const refresh = await this.authService.generateRefreshToken(
       newUser,
       60 * 60 * 24 * 30,
     );
@@ -99,8 +99,8 @@ export class ApiController {
     if (!bcrypt.compareSync(credential.password, user.password))
       throw new HttpException('email or password is wrong', 400);
 
-    const token = this.apiService.createToken(user);
-    const refresh = await this.apiService.generateRefreshToken(
+    const token = this.authService.createToken(user);
+    const refresh = await this.authService.generateRefreshToken(
       user,
       60 * 60 * 24 * 30,
     );
@@ -117,7 +117,7 @@ export class ApiController {
   @Public()
   public async refresh(@Body() body: RefreshRequestDto) {
     const { user, token } =
-      await this.apiService.createAccessTokenFromRefreshToken(
+      await this.authService.createAccessTokenFromRefreshToken(
         body.refresh_token,
       );
 

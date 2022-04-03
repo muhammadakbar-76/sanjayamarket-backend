@@ -4,24 +4,18 @@ import { ApiController } from './api.controller';
 import { FoodModule } from '../food/food.module';
 import { TransactionModule } from '../transaction/transaction.module';
 import { UserModule } from '../user/user.module';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './jwt-strategy';
-import { ConfigModule } from '@nestjs/config';
 import { RatingModule } from '../rating/rating.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET_KEY,
-      signOptions: { expiresIn: process.env.ACCESS_TOKEN_EXPIRATION },
-    }),
     FoodModule,
     TransactionModule,
     UserModule,
     RatingModule,
+    AuthModule,
   ],
   controllers: [ApiController],
-  providers: [ApiService, JwtStrategy],
+  providers: [ApiService],
 })
 export class ApiModule {}
