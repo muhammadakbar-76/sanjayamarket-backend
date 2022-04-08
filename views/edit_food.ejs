@@ -1,0 +1,24 @@
+<div class="container">
+  <form action="/food" method="post" class="p-4 rounded border border-warning">
+      <h3>Edit Food</h3>
+      <div class="row">
+          <div class="col-6">
+              <div class="mb-3">
+                  <label for="name" class="form-label">Name</label>
+                  <input type="text" name="name" class="form-control" id="name" value="<%= food.name %>">
+                </div>
+                <div class="mb-3">
+                  <label for="description" class="form-label">Description</label>
+                  <textarea name="description" id="description" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="ingredients" class="form-label">Ingredients</label>
+                    <input type="text" name="ingredients" class="form-control" id="ingredients" aria-describedby="ingredientsHelp" value="<%= food.ingredients.join(', ') %>">
+                    <div id="ingredientsHelp" class="form-text">Separate ingredients with ","</div>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+</div>
+

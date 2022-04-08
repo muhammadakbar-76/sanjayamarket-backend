@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Food, FoodDocument } from './model/food.model';
 import { Model } from 'mongoose';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
+import { EditFoodRatingDto } from './dto/edit-food-rating.dto';
 
 @Injectable()
 export class FoodService {
@@ -11,18 +12,22 @@ export class FoodService {
     @InjectSentry() private readonly client: SentryService,
   ) {}
 
-  async getAll() {
+  getAll() {
     // at first, i want to select spesific field, but instead of do http req for every detail, lets just call it from cubit
-    return await this.foodRepo.find();
+    return this.foodRepo.find();
   }
 
-  async getById(id: string) {
-    return await this.foodRepo.findById(id);
+  getById(id: string) {
+    return this.foodRepo.findById(id);
   }
 
-  async addFood(newFood: Food) {
+  getFoodOrderCount(id: string) {
+    return this.foodRepo.findById(id).select('id orderCount');
+  }
+
+  addFood(newFood: Food) {
     try {
-      return await this.foodRepo.create(newFood);
+      return this.foodRepo.create(newFood);
     } catch (error) {
       this.client.instance().captureException(error);
     }
@@ -33,15 +38,33 @@ export class FoodService {
       const FoodData = await this.foodRepo.findById(id);
       if (FoodData == null) return null;
 
-      return await this.foodRepo.findByIdAndUpdate(id, food);
+      return this.foodRepo.findByIdAndUpdate(id, food);
     } catch (error) {
       this.client.instance().captureException(error);
     }
   }
 
-  async deleteFood(id: string) {
+  deleteFood(id: string) {
     try {
-      await this.foodRepo.findByIdAndRemove(id);
+      return this.foodRepo.findByIdAndRemove(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  updateFoodOrder(newOrderCount: number, foodId: string) {
+    try {
+      return this.foodRepo.findByIdAndUpdate(foodId, {
+        orderCount: newOrderCount,
+      });
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  updateFoodRate(foodWithNewRate: EditFoodRatingDto, foodId: string) {
+    try {
+      return this.foodRepo.findByIdAndUpdate(foodId, foodWithNewRate);
     } catch (error) {
       this.client.instance().captureException(error);
     }

@@ -1,11 +1,14 @@
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsPhoneNumber,
   IsString,
   MinLength,
 } from 'class-validator';
+import { IsFile, MaxFileSize } from 'nestjs-form-data';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -23,7 +26,7 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  adress: string;
+  address: string;
 
   @IsNotEmpty()
   @IsPhoneNumber('ID')
@@ -33,10 +36,13 @@ export class CreateUserDto {
   @IsString()
   city: string;
 
-  @IsString()
-  photoPath?: string;
+  @IsOptional()
+  @IsFile()
+  @MaxFileSize(1000000)
+  photoPath?: any;
 
   @IsNotEmpty()
+  @Type(() => Number)
   @IsNumber()
   houseNumber: number;
 }

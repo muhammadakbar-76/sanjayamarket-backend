@@ -3,9 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
 import { Transaction, TransactionDocument } from './model/transaction.model';
 import { Model } from 'mongoose';
-import { AddTransactionDto } from './dto/add-transaction.dto';
-import { UserService } from '../user/user.service';
 import { EditOrderDto } from './dto/edit-order.dto';
+import { SaveTransactionDto } from './dto/save-transaction.dto';
 
 @Injectable()
 export class TransactionService {
@@ -13,13 +12,11 @@ export class TransactionService {
     @InjectModel(Transaction.name)
     private readonly transactionRepo: Model<TransactionDocument>,
     @InjectSentry() private readonly client: SentryService,
-    private readonly userRepo: UserService,
   ) {}
 
-  async order(transaction: AddTransactionDto) {
+  async order(transaction: SaveTransactionDto, id: string) {
     try {
-      const user = await this.userRepo.checkId(transaction.user);
-      if (user == null) return null;
+      transaction.user = id;
       await this.transactionRepo.create(transaction);
       return 'Transaction Success';
     } catch (error) {
@@ -27,31 +24,31 @@ export class TransactionService {
     }
   }
 
-  async getOrderByUserId(id: string) {
+  getOrderByUserId(id: string) {
     try {
-      return await this.transactionRepo.find({ user: id }).populate('food');
+      return this.transactionRepo.find({ user: id }).populate('food');
     } catch (error) {
       this.client.instance().captureException(error);
     }
   }
 
-  async getOrder(body: EditOrderDto) {
+  getOrder(body: EditOrderDto, id: string) {
     try {
-      return await this.transactionRepo.findOne({
+      return this.transactionRepo.findOne({
         _id: body.orderId,
-        user: body.userId,
+        user: id,
       });
     } catch (error) {
       this.client.instance().captureException(error);
     }
   }
 
-  async cancelOrder(body: EditOrderDto) {
+  async cancelOrder(body: EditOrderDto, id: string) {
     try {
       await this.transactionRepo.updateOne(
         {
           _id: body.orderId,
-          user: body.userId,
+          user: id,
         },
         { status: 'Canceled' },
       );

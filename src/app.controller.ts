@@ -1,12 +1,17 @@
-import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { Controller, Get, Render, UseFilters, UseGuards } from '@nestjs/common';
+import { AuthenticatedGuard } from './auth/authenticated.guard';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
+@UseGuards(AuthenticatedGuard)
+@UseFilters(new HttpExceptionFilter('/auth/login'))
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @Render('home.ejs')
+  home() {
+    return {
+      layout: 'templates/main_layout.ejs',
+      title: 'Dashboard',
+    };
   }
 }

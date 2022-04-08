@@ -3,9 +3,10 @@ import {
   Controller,
   Get,
   HttpException,
-  Param,
   Post,
   Put,
+  Req,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,7 +19,6 @@ import { JwtAuthGuard } from '../auth/jwt-guard';
 import { Public } from '../decorator/public.decorator';
 import { AddTransactionDto } from '../transaction/dto/add-transaction.dto';
 import { TransactionService } from '../transaction/transaction.service';
-import { UserParamDto } from '../user/dto/user-param.dto';
 import { EditUserDto } from '../user/dto/edit-user.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { CreateRatingDto } from '../rating/dto/create-rating.dto';
@@ -28,6 +28,11 @@ import { User, UserDocument } from '../user/model/user.model';
 import { RefreshRequestDto } from '../user/dto/refresh-request.dto';
 import { SanitizeMongooseModelInterceptor } from 'nestjs-mongoose-exclude';
 import { AuthService } from '../auth/auth.service';
+import { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as crypto from 'crypto';
+import { extname, join } from 'path';
 
 export interface AuthenticationPayload {
   user: User;
@@ -36,6 +41,12 @@ export interface AuthenticationPayload {
     token: string;
     refresh_token?: string;
   };
+}
+
+interface payloadJWT {
+  name: string;
+  email: string;
+  id: string;
 }
 
 @UseInterceptors(new SanitizeMongooseModelInterceptor())
@@ -65,14 +76,41 @@ export class ApiController {
     };
   }
 
-  @Get('food')
+  @Get('foods')
   async getAllFood() {
-    return await this.foodService.getAll();
+    const foods = await this.foodService.getAll();
+    return JSON.parse(JSON.stringify(foods));
   }
 
   @Post('register')
   @Public()
-  async registerNewUser(@Body() user: CreateUserDto) {
+  @UseInterceptors(
+    FileInterceptor('photoPath', {
+      storage: diskStorage({
+        destination: join(__dirname, '../..', 'public/images'),
+        filename: (req, file, cb) => {
+          const randomName = crypto.randomBytes(24).toString('hex');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+          return callback(
+            new HttpException('Only image files are allowed!', 400),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async registerNewUser(
+    @Body() user: CreateUserDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (file !== undefined) {
+      user.photoPath = `/images/${file.filename}`;
+    }
     const isEmailRegistered = await this.userService.checkEmail(user.email);
     if (isEmailRegistered !== null)
       throw new HttpException('Email already been registered', 400);
@@ -130,58 +168,95 @@ export class ApiController {
   }
 
   @Post('order')
-  async addTransaction(@Body() body: AddTransactionDto) {
-    const transaction = await this.transactionService.order(body);
-    if (transaction == null) throw new HttpException('UserId not found', 400);
+  async addTransaction(@Body() body: AddTransactionDto, @Req() req: Request) {
+    const payload = req.user as payloadJWT;
+    const foodsList = await Promise.all(
+      body.food.map((id) => {
+        const food = this.foodService.getFoodOrderCount(id);
+        if (food == null) throw new HttpException("Food does'nt exist", 400);
+        return food;
+      }),
+    );
+    await Promise.all(
+      foodsList.map((fl, i) => {
+        const data = this.foodService.updateFoodOrder(
+          fl.orderCount + body.quantity[i],
+          fl.id,
+        );
+        return data;
+      }),
+    );
+    const transaction = await this.transactionService.order(body, payload.id);
     return transaction;
   }
 
-  @Get('order/:id')
-  async getOrderByUserId(@Param() userParam: UserParamDto) {
+  @Get('order')
+  async getOrderByUserId(@Req() req: Request) {
+    const payload = req.user as payloadJWT;
     const userOrders = await this.transactionService.getOrderByUserId(
-      userParam.id,
+      payload.id,
     );
-    if (userOrders.length === 0) throw new HttpException('User Not Found', 404);
-    return userOrders;
+    if (userOrders.length === 0)
+      throw new HttpException('User or Order Not Found', 404);
+    return JSON.parse(JSON.stringify(userOrders));
   }
 
   @Put('order')
-  async cancelOrder(@Body() body: EditOrderDto) {
-    const order = await this.transactionService.getOrder(body);
+  async cancelOrder(@Body() body: EditOrderDto, @Req() req: Request) {
+    const payload = req.user as payloadJWT;
+    const order = await this.transactionService.getOrder(body, payload.id);
     if (order === null) throw new HttpException('User or Order not found', 404);
-    if (order.status === 'Delivering')
+    if (order.status !== 'Belum Bayar')
       throw new HttpException(
-        "Food already been delivered, sorry you can't cancel this order",
+        "Food already been delivered/paid, sorry you can't cancel this order",
         400,
       );
-    return await this.transactionService.cancelOrder(body);
+    return await this.transactionService.cancelOrder(body, payload.id);
   }
 
   @Post('rate')
-  async setRate(@Body() body: CreateRatingDto) {
-    const isUserExisted = await this.userService.checkId(body.user);
+  async setRate(@Body() body: CreateRatingDto, @Req() req: Request) {
+    const payload = req.user as payloadJWT;
+    const isUserExisted = await this.userService.checkId(payload.id);
     if (isUserExisted == null)
       throw new HttpException(
         "You already rated this food or user doesn't exist",
         400,
       );
-    const isAlreadyRated = await this.ratingService.checkRating(body);
+    const food = await this.foodService.getById(body.food);
+    if (food == null) throw new HttpException("food doesn't exist", 400);
+    const isAlreadyRated = await this.ratingService.checkRating(
+      body,
+      payload.id,
+    );
     if (isAlreadyRated)
       throw new HttpException(
         "You already rated this food or user doesn't exist",
         400,
       );
-    return await this.ratingService.addRate(body);
+    const newRate =
+      (food.rate * food.rateCount + body.rate) / (food.rateCount + 1);
+    await this.foodService.updateFoodRate(
+      {
+        rate: Number(newRate.toFixed(1)),
+        rateCount: food.rateCount + 1,
+      },
+      body.food,
+    );
+    return await this.ratingService.addRate(body, payload.id);
   }
 
-  @Put('user/:id')
-  async editUser(@Param() userParam: UserParamDto, @Body() body: EditUserDto) {
-    const user = await this.userService.checkId(userParam.id);
+  @Put('user')
+  async editUser(@Body() body: EditUserDto, @Req() req: Request) {
+    const payload = req.user as payloadJWT;
+    const user = await this.userService.checkId(payload.id);
     if (user == null)
       throw new HttpException('User Not Existed or Old Password Wrong', 400);
-    if (!bcrypt.compareSync(body.oldPassword, user.password))
-      throw new HttpException('User Not Existed or Old Password Wrong', 400);
-    await this.userService.editUser(userParam.id, body);
+    if (body.oldPassword !== null) {
+      if (!bcrypt.compareSync(body.oldPassword, user.password))
+        throw new HttpException('User Not Existed or Old Password Wrong', 400);
+    }
+    await this.userService.editUser(payload.id, body);
     return 'Your profile updated successfully';
   }
 }

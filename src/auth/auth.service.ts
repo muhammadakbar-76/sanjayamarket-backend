@@ -20,8 +20,12 @@ export class AuthService {
     const payload = {
       name: user.name,
       email: user.email,
+      id: String(user.id),
     };
-    return this.jwtService.sign(payload, { subject: String(user.id) });
+    const opts: SignOptions = {
+      expiresIn: '1h',
+    };
+    return this.jwtService.sign(payload, opts);
   }
 
   async generateRefreshToken(user: UserDocument, expiresIn: number) {
@@ -29,6 +33,7 @@ export class AuthService {
     const payload = {
       name: user.name,
       email: user.email,
+      id: String(user.id),
     };
     const opts: SignOptions = {
       expiresIn,

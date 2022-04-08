@@ -7,9 +7,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       secretOrKey: process.env.JWT_SECRET_KEY,
       ignoreExpiration: false,
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      signOptions: {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRATION,
-      },
     });
   }
 
@@ -17,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return {
       name: payload.name,
       email: payload.email,
+      id: payload.id,
     };
   }
 }

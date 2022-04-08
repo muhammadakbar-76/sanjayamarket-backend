@@ -1,5 +1,4 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsDate } from 'class-validator';
 import { Document } from 'mongoose';
 
 export type FoodDocument = Food & Document;
@@ -24,17 +23,16 @@ export class Food {
   @Prop()
   types: FoodType;
 
-  @Prop()
-  picturePath?: string;
+  @Prop({ default: '' })
+  picturePath: string;
 
-  @Prop()
+  @Prop({ default: 0 })
   rateCount: number;
 
-  @Prop()
+  @Prop({ default: 0 })
   orderCount: number;
 
-  @IsDate()
-  @Prop()
+  @Prop({ default: new Date().toLocaleDateString() })
   date: string;
 }
 

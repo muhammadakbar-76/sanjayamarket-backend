@@ -1,15 +1,13 @@
-import { IsDecimal, IsMongoId, IsNotEmpty } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
 
 export class CreateRatingDto {
-  @IsNotEmpty()
-  @IsMongoId()
-  user: string;
-
   @IsNotEmpty()
   @IsMongoId()
   food: string;
 
   @IsNotEmpty()
-  @IsDecimal()
+  @IsNumber()
+  @Min(0)
+  @Max(5)
   rate: number;
 }

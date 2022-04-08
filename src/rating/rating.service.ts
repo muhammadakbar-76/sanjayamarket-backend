@@ -4,6 +4,7 @@ import { CreateRatingDto } from './dto/create-rating.dto';
 import { Rating, RatingDocument } from './model/rating.model';
 import { Model } from 'mongoose';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
+import { SaveRatingDto } from './dto/save-rating.dto';
 
 @Injectable()
 export class RatingService {
@@ -13,13 +14,12 @@ export class RatingService {
     @InjectSentry() private readonly client: SentryService,
   ) {}
 
-  async checkRating(body: CreateRatingDto) {
+  async checkRating(body: CreateRatingDto, userId: string) {
     try {
       const isAlreadyRated = await this.ratingRepo.find({
         food: body.food,
-        user: body.user,
+        user: userId,
       });
-      console.log(isAlreadyRated);
       if (isAlreadyRated.length === 0) return false;
       return true;
     } catch (error) {
@@ -27,8 +27,9 @@ export class RatingService {
     }
   }
 
-  async addRate(body: CreateRatingDto) {
+  async addRate(body: SaveRatingDto, userId: string) {
     try {
+      body.user = userId;
       await this.ratingRepo.create(body);
       return 'Thank you for your feedback';
     } catch (error) {

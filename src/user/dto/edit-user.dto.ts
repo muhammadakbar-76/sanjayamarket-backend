@@ -1,5 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsNumber, IsPhoneNumber, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsPhoneNumber, IsString } from 'class-validator';
+import { IsFile, MaxFileSize } from 'nestjs-form-data';
 import { CreateUserDto } from './create-user.dto';
 
 export class EditUserDto extends PartialType(CreateUserDto) {
@@ -21,7 +22,9 @@ export class EditUserDto extends PartialType(CreateUserDto) {
   @IsString()
   city?: string;
 
-  @IsString()
+  @IsOptional()
+  @IsFile()
+  @MaxFileSize(1000000)
   photoPath?: string;
 
   @IsNumber()

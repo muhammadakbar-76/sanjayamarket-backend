@@ -34,7 +34,7 @@ export class User {
   @Prop({ default: Role.User })
   role: Role;
 
-  @Prop({ default: '' })
+  @Prop({ default: '/images/null.png' })
   photoPath: string;
 
   @Prop()

@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ApiService } from './api.service';
 import { ApiController } from './api.controller';
 import { FoodModule } from '../food/food.module';
 import { TransactionModule } from '../transaction/transaction.module';
@@ -16,6 +15,5 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
   ],
   controllers: [ApiController],
-  providers: [ApiService],
 })
 export class ApiModule {}
