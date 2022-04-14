@@ -32,7 +32,7 @@ import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as crypto from 'crypto';
-import { extname, join } from 'path';
+import { extname } from 'path';
 
 export interface AuthenticationPayload {
   user: User;
@@ -87,7 +87,7 @@ export class ApiController {
   @UseInterceptors(
     FileInterceptor('photoPath', {
       storage: diskStorage({
-        destination: join(__dirname, '../..', 'public/images'),
+        destination: './public/images',
         filename: (req, file, cb) => {
           const randomName = crypto.randomBytes(24).toString('hex');
           cb(null, `${randomName}${extname(file.originalname)}`);
