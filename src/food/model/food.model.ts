@@ -17,13 +17,13 @@ export class Food {
   @Prop()
   price: number;
 
-  @Prop()
+  @Prop({ default: 5.0 })
   rate: number;
 
   @Prop()
   types: FoodType;
 
-  @Prop({ default: '' })
+  @Prop({ default: '/images/null.png' })
   picturePath: string;
 
   @Prop({ default: 0 })

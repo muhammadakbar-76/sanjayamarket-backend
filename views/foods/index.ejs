@@ -13,7 +13,7 @@
   <% } %>
   <% if (success.length > 0) { %>
     <script nonce="<%= cspNonce %>">
-      toastr.success(success, "Success!");
+      toastr.success("<%= success %>", "Success!");
     </script>
     <% } %>
     <a href="/food/add" class="btn bg-gradient-success h-25">Add New Food</a>

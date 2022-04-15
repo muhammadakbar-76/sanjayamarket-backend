@@ -1,0 +1,55 @@
+<div class="container">
+    <form action="/food/add" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
+        <h3>Add Food</h3>
+        <% if (message.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
+                <strong>Oops! Something went Wrong</strong>
+                <ul>
+                    <% message.forEach(element => { %>
+                     <li><%= element %></li>
+                    <% }) %>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
+              </div>
+        <% } %>
+        <div class="row">
+            <div class="col-6">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" name="name" class="form-control" id="name">
+                  </div>
+                  <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea name="description" id="description" class="form-control" rows="4"></textarea>
+                  </div>
+                  <div class="mb-3">
+                      <label for="ingredients" class="form-label">Ingredients</label>
+                      <input type="text" name="ingredients" class="form-control" id="ingredients" aria-describedby="ingredientsHelp">
+                      <div id="ingredientsHelp" class="form-text">Separate ingredients with ","</div>
+                    </div>
+                  </div>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" name="price" class="form-control" id="price">
+                      </div>
+                     <div class="mb-3">
+                        <label for="types" class="form-label">Food Type</label>
+                        <select name="types" id="types" class="form-control">
+                            <option value="" disabled selected>--Select Food Type--</option>
+                            <% foodTypes.forEach(element => { %>
+                                <option value=<%= element %>><%= element %></option>
+                            <% }) %>
+                        </select>
+                      </div>
+                     <div class="mb-3">
+                        <label for="picturePath" class="form-label">Picture</label>
+                        <input type="file" name="picturePath" class="form-control" id="picturePath">
+                      </div>
+                </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+  
+  

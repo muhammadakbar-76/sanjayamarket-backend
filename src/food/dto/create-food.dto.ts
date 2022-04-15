@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { IsFile, MaxFileSize } from 'nestjs-form-data';
 
@@ -10,13 +11,16 @@ export class CreateFoodDto {
   @IsString()
   description: string;
 
-  @IsString({ each: true })
-  ingredients: string[];
+  @IsNotEmpty()
+  @IsString()
+  ingredients: string;
 
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number)
   price: number;
 
+  @IsOptional()
   @IsNumber()
   rate?: number;
 
@@ -29,9 +33,11 @@ export class CreateFoodDto {
   @MaxFileSize(100000)
   picturePath?: any;
 
+  @IsOptional()
   @IsNumber()
   rateCount?: number;
 
+  @IsOptional()
   @IsNumber()
   orderCount?: number;
 }
