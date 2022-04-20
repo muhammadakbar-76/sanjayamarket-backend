@@ -40,7 +40,7 @@ async function bootstrap() {
       secret: process.env.SESSION_KEY, //express session by default store in memory so it will cause memory leaks, so for best practice in production see the documentation
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 60 * 60 * 24 }, // you should learn redis
+      cookie: { maxAge: 3600000 }, // you should learn redis
     }),
   );
   app.use(flash());

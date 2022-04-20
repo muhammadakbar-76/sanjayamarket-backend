@@ -4,8 +4,8 @@ import { CreateFoodDto } from './create-food.dto';
 
 export class EditFoodRatingDto extends PartialType(CreateFoodDto) {
   @IsNumber()
-  rate?: number;
+  readonly rate?: number;
 
   @IsNumber()
-  rateCount?: number;
+  readonly rateCount?: number;
 }

@@ -3,6 +3,13 @@ import { Document } from 'mongoose';
 
 export type FoodDocument = Food & Document;
 
+export enum FoodType {
+  Junk = 'Junk Food',
+  Vegetable = 'Vegetable',
+  Cuisine = 'Cuisine',
+  Fruit = 'Fruit',
+}
+
 @Schema()
 export class Food {
   @Prop()
@@ -20,8 +27,8 @@ export class Food {
   @Prop({ default: 5.0 })
   rate: number;
 
-  @Prop()
-  types: FoodType;
+  @Prop({ enum: FoodType })
+  types: string;
 
   @Prop({ default: '/images/null.png' })
   picturePath: string;
@@ -37,10 +44,3 @@ export class Food {
 }
 
 export const FoodSchema = SchemaFactory.createForClass(Food);
-
-export enum FoodType {
-  Junk = 'Junk Food',
-  Vegetable = 'Vegetable',
-  Cuisine = 'Cuisine',
-  Fruit = 'Fruit',
-}

@@ -1,0 +1,67 @@
+<div class="container">
+    <form action="/user" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
+        <h3>Add Food</h3>
+        <% if (message.length > 0) { %>
+            <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
+                <strong>Oops! Something went Wrong</strong>
+                <ul>
+                    <% message.forEach(element => { %>
+                     <li><%= element %></li>
+                    <% }) %>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
+              </div>
+        <% } %>
+        <div class="row">
+            <div class="col-6">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" name="name" class="form-control" id="name">
+                  </div>
+                  <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" name="email" class="form-control" id="email">
+                  </div>
+                  <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" name="password" class="form-control" id="password">
+                  </div>
+                  <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <input type="text" name="address" class="form-control" id="address">
+                  </div>
+                  <div class="mb-3">
+                    <label for="phoneNumber" class="form-label">Phone Number</label>
+                    <input type="text" name="phoneNumber" class="form-control" id="phoneNumber">
+                  </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-3">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text" name="city" class="form-control" id="city">
+                      </div>
+                    <div class="mb-3">
+                        <label for="houseNumber" class="form-label">House Number</label>
+                        <input type="text" name="houseNumber" class="form-control" id="houseNumber">
+                      </div>
+                     <div class="mb-3">
+                        <label for="role" class="form-label">User Role</label>
+                        <select name="role" id="role" class="form-control">
+                            <option value="" disabled selected>--Select User Role--</option>
+                            <% userRoles.forEach(element => { %>
+                                <option value=<%= element %>><%= element %></option>
+                            <% }) %>
+                        </select>
+                      </div>
+                     <div class="mb-3">
+                        <label for="photoPath" class="form-label">Picture</label>
+                        <input type="file" name="photoPath" class="form-control" id="photoPath">
+                      </div>
+                </div>
+                </div>
+                <button type="submit" class="btn btn-primary me-1">Submit</button>
+                <a href="/user" class="btn btn-secondary">Back</a>
+    </form>
+  </div>
+  
+  

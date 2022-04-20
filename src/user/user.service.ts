@@ -19,6 +19,10 @@ export class UserService {
     @InjectSentry() private readonly client: SentryService,
   ) {}
 
+  getAll() {
+    return this.userRepo.find();
+  }
+
   register(user: SaveUserDto) {
     try {
       return this.userRepo.create(user);
@@ -59,6 +63,7 @@ export class UserService {
     }
   }
 
+  //* Refresh Token Services
   createRefreshToken(userId: string, ttl: number) {
     try {
       const expiration = new Date();

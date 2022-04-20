@@ -33,6 +33,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as crypto from 'crypto';
 import { extname } from 'path';
+import { Status } from '../transaction/model/transaction.model';
 
 export interface AuthenticationPayload {
   user: User;
@@ -172,22 +173,33 @@ export class ApiController {
     const payload = req.user as payloadJWT;
     const foodsList = await Promise.all(
       body.food.map((id) => {
-        const food = this.foodService.getFoodOrderCount(id);
+        const food = this.foodService.getById(id);
         if (food == null) throw new HttpException("Food does'nt exist", 400);
         return food;
       }),
     );
     await Promise.all(
       foodsList.map((fl, i) => {
+        console.log(fl);
         const data = this.foodService.updateFoodOrder(
           fl.orderCount + body.quantity[i],
           fl.id,
         );
-        return data;
+        const order = this.transactionService.order({
+          user: payload.id,
+          food: {
+            _id: fl.id,
+            name: fl.name,
+            imageUrl: fl.picturePath,
+            price: fl.price,
+            status: Status.Bayar,
+            quantity: body.quantity[i],
+          },
+        });
+        return { data, order };
       }),
     );
-    const transaction = await this.transactionService.order(body, payload.id);
-    return transaction;
+    return 'transaction success';
   }
 
   @Get('order')
@@ -198,7 +210,18 @@ export class ApiController {
     );
     if (userOrders.length === 0)
       throw new HttpException('User or Order Not Found', 404);
-    return JSON.parse(JSON.stringify(userOrders));
+    const total = userOrders
+      .filter((val) => val.food.status === 'Belum Bayar')
+      .reduce(
+        (sum, current) => sum + current.food.price * current.food.quantity,
+        0,
+      );
+    return JSON.parse(
+      JSON.stringify({
+        payments: total + total * 0.1 + 10000,
+        orders: userOrders,
+      }),
+    );
   }
 
   @Put('order')
@@ -206,9 +229,9 @@ export class ApiController {
     const payload = req.user as payloadJWT;
     const order = await this.transactionService.getOrder(body, payload.id);
     if (order === null) throw new HttpException('User or Order not found', 404);
-    if (order.status !== 'Belum Bayar')
+    if (order.food.status !== 'Belum Bayar')
       throw new HttpException(
-        "Food already been delivered/paid, sorry you can't cancel this order",
+        "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
         400,
       );
     return await this.transactionService.cancelOrder(body, payload.id);

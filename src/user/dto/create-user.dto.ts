@@ -13,28 +13,28 @@ import { IsFile, MaxFileSize } from 'nestjs-form-data';
 export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
-  name: string;
+  readonly name: string;
 
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  readonly email: string;
 
   @IsNotEmpty()
   @IsString()
   @MinLength(6, { message: 'Password must at least 6 digit' })
-  password: string;
+  readonly password: string;
 
   @IsNotEmpty()
   @IsString()
-  address: string;
+  readonly address: string;
 
   @IsNotEmpty()
   @IsPhoneNumber('ID')
-  phoneNumber: string;
+  readonly phoneNumber: string;
 
   @IsNotEmpty()
   @IsString()
-  city: string;
+  readonly city: string;
 
   @IsOptional()
   @IsFile()
@@ -44,5 +44,5 @@ export class CreateUserDto {
   @IsNotEmpty()
   @Type(() => Number)
   @IsNumber()
-  houseNumber: number;
+  readonly houseNumber: number;
 }

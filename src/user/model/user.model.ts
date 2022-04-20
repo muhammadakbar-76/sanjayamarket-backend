@@ -5,7 +5,7 @@ import { ExcludeProperty } from 'nestjs-mongoose-exclude';
 
 export type UserDocument = User & Document;
 
-enum Role {
+export enum Role {
   User = 'user',
   Admin = 'Admin',
 }
@@ -31,8 +31,8 @@ export class User {
   @Prop()
   city: string;
 
-  @Prop({ default: Role.User })
-  role: Role;
+  @Prop({ default: Role.User, enum: Role })
+  role: string;
 
   @Prop({ default: '/images/null.png' })
   photoPath: string;

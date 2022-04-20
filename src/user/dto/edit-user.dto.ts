@@ -5,28 +5,28 @@ import { CreateUserDto } from './create-user.dto';
 
 export class EditUserDto extends PartialType(CreateUserDto) {
   @IsString()
-  name?: string;
+  readonly name?: string;
 
   @IsString()
-  password?: string;
+  readonly password?: string;
 
   @IsString()
-  oldPassword?: string;
+  readonly oldPassword?: string;
 
   @IsString()
-  adress?: string;
+  readonly adress?: string;
 
   @IsPhoneNumber('ID')
-  phoneNumber?: string;
+  readonly phoneNumber?: string;
 
   @IsString()
-  city?: string;
+  readonly city?: string;
 
   @IsOptional()
   @IsFile()
   @MaxFileSize(1000000)
-  photoPath?: string;
+  readonly photoPath?: string;
 
   @IsNumber()
-  houseNumber?: number;
+  readonly houseNumber?: number;
 }

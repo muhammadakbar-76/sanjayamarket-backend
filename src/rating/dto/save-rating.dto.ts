@@ -8,9 +8,9 @@ export class SaveRatingDto extends PartialType(CreateRatingDto) {
 
   @IsNotEmpty()
   @IsMongoId()
-  food: string;
+  readonly food: string;
 
   @IsNotEmpty()
   @IsDecimal()
-  rate: number;
+  readonly rate: number;
 }

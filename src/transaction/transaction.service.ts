@@ -14,11 +14,9 @@ export class TransactionService {
     @InjectSentry() private readonly client: SentryService,
   ) {}
 
-  async order(transaction: SaveTransactionDto, id: string) {
+  order(transaction: SaveTransactionDto) {
     try {
-      transaction.user = id;
-      await this.transactionRepo.create(transaction);
-      return 'Transaction Success';
+      return this.transactionRepo.create(transaction);
     } catch (error) {
       this.client.instance().captureException(error);
     }
@@ -37,6 +35,7 @@ export class TransactionService {
       return this.transactionRepo.findOne({
         _id: body.orderId,
         user: id,
+        'food._id': body.foodId,
       });
     } catch (error) {
       this.client.instance().captureException(error);
@@ -49,8 +48,9 @@ export class TransactionService {
         {
           _id: body.orderId,
           user: id,
+          'food._id': body.foodId,
         },
-        { status: 'Canceled' },
+        { 'food.status': 'Canceled' },
       );
       return 'Your order successfully canceled';
     } catch (error) {

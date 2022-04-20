@@ -3,5 +3,9 @@ import { IsMongoId, IsNotEmpty } from 'class-validator';
 export class EditOrderDto {
   @IsNotEmpty()
   @IsMongoId()
-  orderId: string;
+  readonly orderId: string;
+
+  @IsNotEmpty()
+  @IsMongoId()
+  readonly foodId: string;
 }

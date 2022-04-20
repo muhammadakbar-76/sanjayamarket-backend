@@ -4,23 +4,23 @@ import { CreateUserDto } from './create-user.dto';
 
 export class SaveUserDto extends PartialType(CreateUserDto) {
   @IsString()
-  name?: string;
+  readonly name?: string;
 
   @IsString()
-  password?: string;
+  readonly password?: string;
 
   @IsString()
-  adress?: string;
+  readonly adress?: string;
 
   @IsPhoneNumber('ID')
-  phoneNumber?: string;
+  readonly phoneNumber?: string;
 
   @IsString()
-  city?: string;
+  readonly city?: string;
 
   @IsString()
-  photoPath?: string;
+  readonly photoPath?: string;
 
   @IsNumber()
-  houseNumber?: number;
+  readonly houseNumber?: number;
 }

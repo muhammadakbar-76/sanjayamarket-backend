@@ -1,5 +1,5 @@
 <div class="container">
-  <form action="/food" method="post" class="p-4 rounded border border-warning">
+  <form action="/food/edit/<%= food._id %>?_method=PUT" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
       <h3>Edit Food</h3>
       <div class="row">
           <div class="col-6">
@@ -9,7 +9,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="description" class="form-label">Description</label>
-                  <textarea name="description" id="description" class="form-control" rows="4"></textarea>
+                  <textarea name="description" id="description" class="form-control" rows="4"><%= food.description %></textarea>
                 </div>
                 <div class="mb-3">
                     <label for="ingredients" class="form-label">Ingredients</label>
@@ -17,8 +17,31 @@
                     <div id="ingredientsHelp" class="form-text">Separate ingredients with ","</div>
                   </div>
                 </div>
+            <div class="col-6">
+              <div class="mb-3">
+                <label for="price" class="form-label">Price</label>
+                <input type="number" name="price" class="form-control" id="price" value="<%= food.price %>">
               </div>
-              <button type="submit" class="btn btn-primary">Submit</button>
+             <div class="mb-3">
+                <label for="types" class="form-label">Food Type</label>
+                <select name="types" id="types" class="form-control">
+                    <% foodTypes.forEach(element => { %>
+                      <% if (food.types === element) { %>
+                        <option value=<%= element %> selected><%= element %></option>
+                      <% } else { %>
+                        <option value=<%= element %>><%= element %></option>
+                      <% } %>
+                    <% }) %>
+                </select>
+              </div>
+             <div class="mb-3">
+                <label for="picturePath" class="form-label">Picture</label>
+                <input type="file" name="picturePath" class="form-control" id="picturePath">
+              </div>
+            </div>
+              </div>
+              <button type="submit" class="btn btn-primary me-1">Submit</button>
+              <a href="/food" class="btn btn-secondary">Back</a>
   </form>
 </div>
 

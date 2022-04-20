@@ -1,15 +1,18 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   Param,
   Post,
+  Put,
   Render,
   Req,
   Res,
   UploadedFile,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -22,7 +25,12 @@ import { Food, FoodType } from './model/food.model';
 import * as crypto from 'crypto';
 import { extname } from 'path';
 import { CreateFoodDto } from './dto/create-food.dto';
+import { AuthenticatedGuard } from '../auth/authenticated.guard';
+import { EditFoodDto } from './dto/edit-food.dto';
+import * as fs from 'fs';
 
+@UseGuards(AuthenticatedGuard)
+@UseFilters(new HttpExceptionFilter('/auth/login'))
 @Controller('food')
 export class FoodController {
   constructor(private readonly foodService: FoodService) {}
@@ -50,12 +58,12 @@ export class FoodController {
   ) {
     const food = await this.foodService.getById(foodParam.id);
     if (!food) throw new HttpException("Food doesn't Exist", 404);
-    const message = req.flash('message');
+    const foodTypes = Object.values(FoodType);
     res.render('foods/edit_food', {
       title: 'Foods',
       layout: 'templates/main_layout',
       food,
-      message,
+      foodTypes,
     });
   }
 
@@ -100,7 +108,6 @@ export class FoodController {
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    console.log('you are here');
     const removedSpacesIngredients = food.ingredients.replace(/\s*,\s*/g, ',');
     const ingredientsArray = removedSpacesIngredients.split(',');
     const newFood = new Food();
@@ -116,6 +123,72 @@ export class FoodController {
     newFood.price = food.price;
     await this.foodService.addFood(newFood);
     req.flash('success', 'New Food Successfully Added');
+    res.redirect('/food');
+  }
+
+  @Put('edit/:id')
+  @UseFilters(new HttpExceptionFilter('/food'))
+  @UseInterceptors(
+    FileInterceptor('picturePath', {
+      storage: diskStorage({
+        destination: './public/images',
+        filename: (req, file, cb) => {
+          const randomName = crypto.randomBytes(24).toString('hex');
+          cb(null, `${randomName}${extname(file.originalname)}`);
+        },
+      }),
+      fileFilter: (req, file, callback) => {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+          return callback(
+            new HttpException('Only image files are allowed!', 400),
+            false,
+          );
+        }
+        callback(null, true);
+      },
+    }),
+  )
+  async editFood(
+    @Param() foodParam: FoodParams,
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() body: EditFoodDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const food = await this.foodService.getById(foodParam.id);
+    if (food == null) throw new HttpException("Food doesn't exist", 404);
+    const removedSpacesIngredients = body.ingredients.replace(/\s*,\s*/g, ',');
+    const ingredientsArray = removedSpacesIngredients.split(',');
+    const editedFood = new Food();
+    if (file != null) {
+      editedFood.picturePath = `/images/${file.filename}`;
+      if (food.picturePath !== '/images/null.png') {
+        fs.unlinkSync(`./public${food.picturePath}`);
+      }
+    }
+    Object.keys(FoodType).forEach((e) => {
+      if (FoodType[e] === body.types) editedFood.types = FoodType[e];
+    });
+    editedFood.name = body.name;
+    editedFood.description = body.description;
+    editedFood.ingredients = ingredientsArray;
+    editedFood.price = body.price;
+    await this.foodService.updateFood(foodParam.id, editedFood);
+    req.flash('success', 'Food Successfully Edited');
+    res.redirect('/food');
+  }
+
+  @Delete(':id')
+  @UseFilters(new HttpExceptionFilter('/food'))
+  async deleteFood(
+    @Param() foodParam: FoodParams,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const food = await this.foodService.getById(foodParam.id);
+    if (food == null) throw new HttpException('Food not found', 404);
+    await this.foodService.deleteFood(foodParam.id);
+    req.flash('success', 'Food deleted successfully');
     res.redirect('/food');
   }
 }

@@ -5,39 +5,27 @@ import { IsFile, MaxFileSize } from 'nestjs-form-data';
 export class CreateFoodDto {
   @IsNotEmpty()
   @IsString()
-  name: string;
+  readonly name: string;
 
   @IsNotEmpty()
   @IsString()
-  description: string;
+  readonly description: string;
 
   @IsNotEmpty()
   @IsString()
-  ingredients: string;
+  readonly ingredients: string;
 
   @IsNotEmpty()
   @IsNumber()
   @Type(() => Number)
-  price: number;
-
-  @IsOptional()
-  @IsNumber()
-  rate?: number;
-
-  @IsNotEmpty()
-  @IsString()
-  types: string;
+  readonly price: number;
 
   @IsOptional()
   @IsFile()
   @MaxFileSize(100000)
-  picturePath?: any;
+  readonly picturePath?: any;
 
-  @IsOptional()
-  @IsNumber()
-  rateCount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  orderCount?: number;
+  @IsNotEmpty()
+  @IsString()
+  readonly types: string;
 }

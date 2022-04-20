@@ -21,10 +21,6 @@ export class FoodService {
     return this.foodRepo.findById(id);
   }
 
-  getFoodOrderCount(id: string) {
-    return this.foodRepo.findById(id).select('id orderCount');
-  }
-
   addFood(newFood: Food) {
     try {
       return this.foodRepo.create(newFood);
