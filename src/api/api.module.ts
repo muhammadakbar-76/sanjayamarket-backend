@@ -5,6 +5,7 @@ import { TransactionModule } from '../transaction/transaction.module';
 import { UserModule } from '../user/user.module';
 import { RatingModule } from '../rating/rating.module';
 import { AuthModule } from '../auth/auth.module';
+import { ApiService } from './api.service';
 
 @Module({
   imports: [
@@ -15,5 +16,6 @@ import { AuthModule } from '../auth/auth.module';
     AuthModule,
   ],
   controllers: [ApiController],
+  providers: [ApiService],
 })
 export class ApiModule {}

@@ -34,6 +34,7 @@ import { diskStorage } from 'multer';
 import * as crypto from 'crypto';
 import { extname } from 'path';
 import { Status } from '../transaction/model/transaction.model';
+import { ApiService } from './api.service';
 
 export interface AuthenticationPayload {
   user: User;
@@ -60,6 +61,7 @@ export class ApiController {
     private readonly userService: UserService,
     private readonly transactionService: TransactionService,
     private readonly ratingService: RatingService,
+    private readonly apiService: ApiService,
   ) {}
 
   private buildResponsePayload(
@@ -194,6 +196,10 @@ export class ApiController {
         return order;
       }),
     );
+    const message = foodsList
+      .map((fl, i) => `${fl.name} sebanyak ${body.quantity[i]}`)
+      .join('\n');
+    await this.apiService.sendMessage(payload.email, payload.id, message);
     return 'transaction success';
   }
 
