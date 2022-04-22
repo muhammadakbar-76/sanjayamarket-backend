@@ -180,11 +180,6 @@ export class ApiController {
     );
     await Promise.all(
       foodsList.map((fl, i) => {
-        console.log(fl);
-        const data = this.foodService.updateFoodOrder(
-          fl.orderCount + body.quantity[i],
-          fl.id,
-        );
         const order = this.transactionService.order({
           user: payload.id,
           food: {
@@ -196,7 +191,7 @@ export class ApiController {
             quantity: body.quantity[i],
           },
         });
-        return { data, order };
+        return order;
       }),
     );
     return 'transaction success';
@@ -218,7 +213,7 @@ export class ApiController {
       );
     return JSON.parse(
       JSON.stringify({
-        payments: total + total * 0.1 + 10000,
+        payments: total + total * 0.1 + total <= 0 ? 0 : 10000,
         orders: userOrders,
       }),
     );
@@ -227,9 +222,9 @@ export class ApiController {
   @Put('order')
   async cancelOrder(@Body() body: EditOrderDto, @Req() req: Request) {
     const payload = req.user as payloadJWT;
-    const order = await this.transactionService.getOrder(body, payload.id);
-    if (order === null) throw new HttpException('User or Order not found', 404);
-    if (order.food.status !== 'Belum Bayar')
+    const data = await this.transactionService.getOrder(body, payload.id);
+    if (data === null) throw new HttpException('User or Order not found', 404);
+    if (data.food.status !== 'Belum Bayar')
       throw new HttpException(
         "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
         400,
