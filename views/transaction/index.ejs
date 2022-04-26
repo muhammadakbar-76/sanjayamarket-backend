@@ -1,0 +1,37 @@
+<div class="container">
+    <div class="d-flex justify-content-between">
+      <% if (message.length > 0) { %>
+        <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
+            <strong>Oops! Something Wrong</strong>
+            <ul>
+                <% message.forEach(element => { %>
+                 <li><%= element %></li>
+                <% }) %>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
+          </div>
+    <% } %>
+    <% if (success.length > 0) { %>
+      <script nonce="<%= cspNonce %>">
+        toastr.success("<%= success %>", "Success!");
+      </script>
+      <% } %>
+    </div>
+      <div class="card mb-5">
+          <div class="table-responsive p-3">
+            <table class="table align-items-center mb-0" id="tblDataOrders">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">User</th>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7 ps-2">Food</th>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7 ps-2">Price</th>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7 ps-2">Quantity</th>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7 ps-2">Status</th>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7 ps-2">Order Date</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+      </div>
+  </div>

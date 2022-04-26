@@ -20,7 +20,27 @@ export class UserService {
   ) {}
 
   getAll() {
-    return this.userRepo.find();
+    try {
+      return this.userRepo.find();
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  getAllForTransaction() {
+    try {
+      return this.userRepo.find({ role: 'user' }).select('id email');
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  deleteById(id: string) {
+    try {
+      return this.userRepo.findByIdAndDelete(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
   }
 
   register(user: SaveUserDto) {

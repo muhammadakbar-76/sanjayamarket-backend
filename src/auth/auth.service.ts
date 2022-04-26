@@ -1,8 +1,8 @@
 import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignOptions, TokenExpiredError } from 'jsonwebtoken';
-import { UserDocument } from 'src/user/model/user.model';
-import { UserService } from 'src/user/user.service';
+import { UserDocument } from '../user/model/user.model';
+import { UserService } from '../user/user.service';
 
 export interface RefreshTokenPayload {
   jti: string;

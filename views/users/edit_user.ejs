@@ -1,26 +1,15 @@
 <div class="container">
     <form action="/user" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
-        <h3>Add User</h3>
-        <% if (message.length > 0) { %>
-            <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
-                <strong>Oops! Something went Wrong</strong>
-                <ul>
-                    <% message.forEach(element => { %>
-                     <li><%= element %></li>
-                    <% }) %>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
-              </div>
-        <% } %>
+        <h3>Edit User</h3>
         <div class="row">
             <div class="col-6">
                 <div class="mb-3">
                     <label for="name" class="form-label">Name</label>
-                    <input type="text" name="name" class="form-control" id="name">
+                    <input type="text" name="name" class="form-control" id="name" value="<%= user.name %>">
                   </div>
                   <div class="mb-3">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" id="email">
+                    <input type="email" name="email" class="form-control" id="email" value="<%= user.email %>">
                   </div>
                   <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
@@ -28,28 +17,32 @@
                   </div>
                   <div class="mb-3">
                     <label for="address" class="form-label">Address</label>
-                    <input type="text" name="address" class="form-control" id="address">
+                    <input type="text" name="address" class="form-control" id="address" value="<%= user.address %>">
                   </div>
                   <div class="mb-3">
                     <label for="phoneNumber" class="form-label">Phone Number</label>
-                    <input type="text" name="phoneNumber" class="form-control" id="phoneNumber">
+                    <input type="text" name="phoneNumber" class="form-control" id="phoneNumber" value="<%= user.phoneNumber %>">
                   </div>
                 </div>
                 <div class="col-6">
                     <div class="mb-3">
                         <label for="city" class="form-label">City</label>
-                        <input type="text" name="city" class="form-control" id="city">
+                        <input type="text" name="city" class="form-control" id="city" value="<%= user.city %>">
                       </div>
                     <div class="mb-3">
                         <label for="houseNumber" class="form-label">House Number</label>
-                        <input type="text" name="houseNumber" class="form-control" id="houseNumber">
+                        <input type="text" name="houseNumber" class="form-control" id="houseNumber" value="<%= user.houseNumber %>">
                       </div>
                      <div class="mb-3">
                         <label for="role" class="form-label">User Role</label>
                         <select name="role" id="role" class="form-control">
-                            <option value="" disabled selected>--Select User Role--</option>
+                            <option value="" disabled>--Select User Role--</option>
                             <% userRoles.forEach(element => { %>
+                                <% if (user.role === element) { %>
+                                <option value=<%= element %> selected><%= element %></option>
+                                <% } else { %>
                                 <option value=<%= element %>><%= element %></option>
+                                <% } %> 
                             <% }) %>
                         </select>
                       </div>

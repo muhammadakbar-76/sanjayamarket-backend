@@ -21,6 +21,9 @@ export class SaveUserDto extends PartialType(CreateUserDto) {
   @IsString()
   readonly photoPath?: string;
 
+  @IsString()
+  readonly role?: string;
+
   @IsNumber()
   readonly houseNumber?: number;
 }

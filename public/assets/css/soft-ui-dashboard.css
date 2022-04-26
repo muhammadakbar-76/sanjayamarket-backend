@@ -24629,7 +24629,7 @@ hr.horizontal.gray-light {
 
 .table td,
 .table th {
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .table.align-items-center td,

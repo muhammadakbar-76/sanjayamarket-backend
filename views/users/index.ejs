@@ -18,9 +18,9 @@
       <% } %>
       <a href="/user/add" class="btn bg-gradient-success h-25">Add New User</a>
     </div>
-      <div class="card">
-          <div class="table-responsive">
-            <table class="table align-items-center mb-0">
+      <div class="card mb-5">
+          <div class="table-responsive p-3">
+            <table class="table align-items-center mb-0" id="tblDataUser">
               <thead>
                 <tr>
                   <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Name</th>
@@ -34,42 +34,6 @@
                   <th class="text-secondary opacity-7"></th>
                 </tr>
               </thead>
-              <tbody>
-                <% users.forEach(el => { %>
-                  <tr>
-                      <td style="white-space: normal;">
-                          <p class="text-xs font-weight-bold mb-0"><%= el.name %></p>
-                      </td>
-                      <td style="white-space: normal;">
-                          <p class="text-xs text-secondary mb-0"><%= el.email %></p>
-                      </td>
-                      <td style="white-space: normal;">
-                        <p class="text-xs text-secondary mb-0"><%= el.address %></p>
-                        </td>
-                       <td style="white-space: normal;">
-                          <p class="text-xs text-secondary mb-0"><%= el.phoneNumber %></p>
-                      </td>
-                      <td style="white-space: normal;">
-                          <p class="text-xs text-secondary mb-0"><%= el.city %></p>
-                      </td>
-                      <td style="white-space: normal;">
-                          <p class="text-xs text-secondary mb-0"><%= el.role %></p>
-                      </td>
-                       <td style="white-space: normal;">
-                          <p class="text-xs text-secondary mb-0"><%= el.houseNumber %></p>
-                      </td>
-                      <td style="white-space: normal;">
-                          <img src=<%= el.photoPath %> alt="" class="rounded" width=100 height=100>
-                      </td>
-                      <td class="align-middle">
-                         <a href="/user/edit/<%= el._id %>" class="font-weight-bold text-xs btn bg-gradient-primary ms-2">Edit</a>
-                         <form action="/user/<%= el._id %>?_method=DELETE" method="post" class="delete-user-form">
-                          <button type="submit" class="font-weight-bold text-xs btn bg-gradient-danger delete-user-btn">Delete</button>
-                          </form>
-                      </td>
-                  </tr>
-                <% }) %>
-              </tbody>
             </table>
           </div>
       </div>

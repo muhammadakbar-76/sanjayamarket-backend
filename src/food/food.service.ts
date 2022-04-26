@@ -13,12 +13,27 @@ export class FoodService {
   ) {}
 
   getAll() {
-    // at first, i want to select spesific field, but instead of do http req for every detail, lets just call it from cubit
-    return this.foodRepo.find();
+    try {
+      return this.foodRepo.find();
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  getAllForTransaction() {
+    try {
+      return this.foodRepo.find().select('id name price');
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
   }
 
   getById(id: string) {
-    return this.foodRepo.findById(id);
+    try {
+      return this.foodRepo.findById(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
   }
 
   addFood(newFood: Food) {

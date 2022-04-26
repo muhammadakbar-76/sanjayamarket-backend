@@ -6,8 +6,7 @@ import { FoodDataTransaction } from './food-data.transaction';
 export type TransactionDocument = Transaction & Document;
 
 export enum Status {
-  Bayar = 'Belum Bayar',
-  Lunas = 'Lunas',
+  Bayar = 'Belum_Bayar',
   Cooking = 'Cooking',
   Deliver = 'Delivering',
   Cancel = 'Canceled',
@@ -16,6 +15,9 @@ export enum Status {
 
 @Schema()
 export class Transaction {
+  @Prop()
+  orderId: string;
+
   @Prop({ type: SchemaTypes.ObjectId, ref: User.name })
   user: User;
 

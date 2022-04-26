@@ -1,0 +1,38 @@
+<div class="container">
+    <h3>Transaction Detail</h3>
+    <div class="row">
+        <div class="col-3">
+            <img src="<%= transaction.food.imageUrl %>" alt="" class="rounded border p-2" height="200" width="200">
+        </div>
+        <div class="col-6">
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Transaction ID</p>
+            <p class="text-sm text-secondary mb-0"><%= transaction._id %></p>
+            <hr>
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">User</p>
+            <p class="text-sm text-secondary mb-0"><%= email %></p>
+            <hr>
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Item Name</p>
+            <p class="text-sm text-secondary mb-0"><%= transaction.food.name %></p>
+            <hr>
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Item Price</p>
+            <p class="text-sm text-secondary mb-0"><%= transaction.food.price %></p>
+            <hr>
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Quantity</p>
+            <p class="text-sm text-secondary mb-0"><%= transaction.food.quantity %></p>
+            <hr>
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Date</p>
+            <p class="text-sm text-secondary mb-0"><%= transaction.date %></p>
+            <hr>
+            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Status</p>
+            <p class="text-sm text-secondary mb-0"><%= transaction.food.status %></p>
+            <hr>
+        </div>
+        <div class="col-9">
+            <hr>
+            <div class="d-flex justify-content-between">
+                <p class="text-uppercase text-secondary text-md font-weight-bolder opacity-7">Total</p>
+                <p class="text-uppercase text-secondary text-md font-weight-bolder opacity-7"><%= (transaction.food.price * transaction.food.quantity) %></p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -36,17 +36,21 @@ export class FoodController {
   constructor(private readonly foodService: FoodService) {}
 
   @Get()
-  async showAllFood(@Req() req: Request, @Res() res: Response) {
-    const foods = await this.foodService.getAll();
+  async showPageFood(@Req() req: Request, @Res() res: Response) {
     const message = req.flash('message');
     const success = req.flash('success');
     res.render('foods/index', {
       title: 'Foods',
       layout: 'templates/main_layout',
-      foods,
       message,
       success,
     });
+  }
+
+  @Get('get-all')
+  async getAllFood(@Res() res: Response) {
+    const foods = await this.foodService.getAll();
+    return res.status(200).json(foods);
   }
 
   @Get('edit/:id')

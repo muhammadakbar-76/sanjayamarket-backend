@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Req,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -28,7 +29,7 @@ import { User, UserDocument } from '../user/model/user.model';
 import { RefreshRequestDto } from '../user/dto/refresh-request.dto';
 import { SanitizeMongooseModelInterceptor } from 'nestjs-mongoose-exclude';
 import { AuthService } from '../auth/auth.service';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as crypto from 'crypto';
@@ -80,9 +81,9 @@ export class ApiController {
   }
 
   @Get('foods')
-  async getAllFood() {
+  async getAllFood(@Res() res: Response) {
     const foods = await this.foodService.getAll();
-    return JSON.parse(JSON.stringify(foods));
+    return res.status(200).json(foods);
   }
 
   @Post('register')
@@ -180,9 +181,11 @@ export class ApiController {
         return food;
       }),
     );
-    await Promise.all(
+    const order = await this.transactionService.addOrder([]);
+    const transactions = await Promise.all(
       foodsList.map((fl, i) => {
-        const order = this.transactionService.order({
+        const transaction = this.transactionService.addTransaction({
+          orderId: order.id,
           user: payload.id,
           food: {
             _id: fl.id,
@@ -193,49 +196,63 @@ export class ApiController {
             quantity: body.quantity[i],
           },
         });
-        return order;
+        return transaction;
       }),
     );
+    const listOfTransactionsId = transactions.map((el) => el.id);
+    const total = transactions.reduce(
+      (sum, current) => sum + current.food.price * current.food.quantity,
+      0,
+    );
     const message = foodsList
-      .map((fl, i) => `${fl.name} sebanyak ${body.quantity[i]}`)
+      .map(
+        (fl, i) =>
+          `${fl.name} sebanyak ${body.quantity[i]} dengan orderId: ${transactions[i].id}`,
+      )
       .join('\n');
-    await this.apiService.sendMessage(payload.email, payload.id, message);
+    await Promise.all([
+      this.transactionService.updateOrder(order.id, listOfTransactionsId),
+      this.apiService.sendMessage(
+        payload.email,
+        payload.id,
+        message,
+        total + total * 0.1 + 10000,
+      ),
+    ]).catch((error) => console.log(error));
     return 'transaction success';
   }
 
   @Get('order')
-  async getOrderByUserId(@Req() req: Request) {
+  async getOrderByUserId(@Req() req: Request, @Res() res: Response) {
     const payload = req.user as payloadJWT;
-    const userOrders = await this.transactionService.getOrderByUserId(
+    const userOrders = await this.transactionService.getTransactionByUserId(
       payload.id,
     );
     if (userOrders.length === 0)
       throw new HttpException('User or Order Not Found', 404);
     const total = userOrders
-      .filter((val) => val.food.status === 'Belum Bayar')
+      .filter((val) => val.food.status === 'Belum_Bayar')
       .reduce(
         (sum, current) => sum + current.food.price * current.food.quantity,
         0,
       );
-    return JSON.parse(
-      JSON.stringify({
-        payments: total + total * 0.1 + total <= 0 ? 0 : 10000,
-        orders: userOrders,
-      }),
-    );
+    return res.status(200).json({
+      payments: total + total * 0.1 + total <= 0 ? 0 : 10000,
+      orders: userOrders,
+    });
   }
 
   @Put('order')
   async cancelOrder(@Body() body: EditOrderDto, @Req() req: Request) {
     const payload = req.user as payloadJWT;
-    const data = await this.transactionService.getOrder(body, payload.id);
+    const data = await this.transactionService.getTransaction(body, payload.id);
     if (data === null) throw new HttpException('User or Order not found', 404);
-    if (data.food.status !== 'Belum Bayar')
+    if (data.food.status !== 'Belum_Bayar')
       throw new HttpException(
         "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
         400,
       );
-    return await this.transactionService.cancelOrder(body, payload.id);
+    return await this.transactionService.cancelTransaction(body, payload.id);
   }
 
   @Post('rate')
@@ -282,5 +299,11 @@ export class ApiController {
     }
     await this.userService.editUser(payload.id, body);
     return 'Your profile updated successfully';
+  }
+
+  @Post('twilio')
+  @Public()
+  sendMessageToApiStatus(@Body() body: any) {
+    this.apiService.sendMessageStatus(body);
   }
 }

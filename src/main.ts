@@ -29,7 +29,16 @@ async function bootstrap() {
           "'self'",
           (req: Request, res: Response) => `'nonce-${res.locals.cspNonce}'`,
         ],
-        connectSrc: ['*.fontawesome.com/', 'https://cdnjs.cloudflare.com/'],
+        connectSrc: [
+          '*.fontawesome.com/',
+          'https://cdnjs.cloudflare.com/',
+          "'self'",
+        ],
+        imgSrc: [
+          "'self'",
+          'https://cdn.datatables.net/1.11.5/images/sort_both.png',
+          'https://cdn.datatables.net/1.11.5/images/sort_asc.png',
+        ],
       },
     }),
   );

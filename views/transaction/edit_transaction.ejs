@@ -1,0 +1,59 @@
+<div class="container">
+    <form action="/transaction/<%= transaction._id %>?_method=PUT" method="post" class="p-4 rounded border border-warning">
+        <h3>Edit Transaction</h3>
+        <div class="row">
+            <div class="col-6">
+                <div class="mb-3">
+                    <label for="user" class="form-label">User</label>
+                    <select name="user" id="user" class="form-control">
+                        <% users.forEach(element => { %>
+                          <% if (element._id.toString() == transaction.user) { %>
+                            <option value="<%= element._id.toString() %>" selected><%= element.email %></option>
+                          <% } else { %>
+                            <option value="<%= element._id.toString() %>"><%= element.email %></option>
+                          <% } %>
+                        <% }) %>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="food" class="form-label">Food</label>
+                    <select name="food" id="food" class="form-control">
+                        <% foods.forEach(element => { %>
+                          <% if (element._id == transaction.food._id) { %>
+                            <option value="<%= element._id %>" selected><%= element.name %></option>
+                          <% } else { %>
+                            <option value="<%= element._id %>"><%= element.name %></option>
+                          <% } %>
+                        <% }) %>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                      <label for="quantity" class="form-label">Quantity</label>
+                      <input type="number" name="quantity" class="form-control" id="quantity" value="<%= transaction.food.quantity %>">
+                    </div>
+                  </div>
+              <div class="col-6">
+                <div class="mb-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-control">
+                        <% orderStatus.forEach(element => { %>
+                          <% if (transaction.food.status === element) { %>
+                            <option value="<%= element %>" selected><%= element %></option>
+                          <% } else { %>
+                            <option value=<%= element %>><%= element %></option>
+                          <% } %>
+                        <% }) %>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" name="date" class="form-control" id="date">
+                  </div>
+              </div>
+                </div>
+                <button type="submit" class="btn btn-primary me-1">Submit</button>
+                <a href="/transaction" class="btn btn-secondary">Back</a>
+    </form>
+  </div>
+  
+  
