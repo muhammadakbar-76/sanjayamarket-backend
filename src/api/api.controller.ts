@@ -207,7 +207,7 @@ export class ApiController {
     const message = foodsList
       .map(
         (fl, i) =>
-          `${fl.name} sebanyak ${body.quantity[i]} dengan orderId: ${transactions[i].id}`,
+          `${fl.name} sebanyak ${body.quantity[i]} dengan transactionId: ${transactions[i].id}\n`,
       )
       .join('\n');
     await Promise.all([
@@ -217,13 +217,14 @@ export class ApiController {
         payload.id,
         message,
         total + total * 0.1 + 10000,
+        order.id,
       ),
-    ]).catch((error) => console.log(error));
+    ]);
     return 'transaction success';
   }
 
   @Get('order')
-  async getOrderByUserId(@Req() req: Request, @Res() res: Response) {
+  async getTransactionByUserId(@Req() req: Request, @Res() res: Response) {
     const payload = req.user as payloadJWT;
     const userOrders = await this.transactionService.getTransactionByUserId(
       payload.id,
@@ -243,7 +244,7 @@ export class ApiController {
   }
 
   @Put('order')
-  async cancelOrder(@Body() body: EditOrderDto, @Req() req: Request) {
+  async cancelTransaction(@Body() body: EditOrderDto, @Req() req: Request) {
     const payload = req.user as payloadJWT;
     const data = await this.transactionService.getTransaction(body, payload.id);
     if (data === null) throw new HttpException('User or Order not found', 404);

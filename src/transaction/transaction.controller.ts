@@ -6,6 +6,7 @@ import {
   HttpException,
   Param,
   Put,
+  Query,
   Render,
   Req,
   Res,
@@ -21,6 +22,7 @@ import { TransactionService } from './transaction.service';
 import { FoodService } from '../food/food.service';
 import { AuthenticatedGuard } from '../auth/authenticated.guard';
 import { EditTransactionDto } from './dto/edit-transaction.dto';
+import { StatusQueryDto } from './dto/status-query.dto';
 
 @Controller('transaction')
 @UseGuards(AuthenticatedGuard)
@@ -34,7 +36,7 @@ export class TransactionController {
 
   @Get()
   @Render('transaction/index')
-  async showOrderPage(@Req() req: Request) {
+  async showTransactionsPage(@Req() req: Request) {
     const message = req.flash('message');
     const success = req.flash('success');
     return {
@@ -130,25 +132,33 @@ export class TransactionController {
   @Get('orders')
   @UseFilters(new HttpExceptionFilter('transaction/orders'))
   @Render('transaction/orders')
-  async getAllOrders(@Req() req: Request) {
-    const transactions = await this.transactionService.getAllTransaction();
-    const belumBayar = transactions.filter(
-      (el) => el.food.status === 'Belum_Bayar',
-    );
-    const cooking = transactions.filter((el) => el.food.status === 'Cooking');
-    const deliver = transactions.filter(
-      (el) => el.food.status === 'Delivering',
-    );
+  async showOnProgressOrderPage(@Req() req: Request) {
     const message = req.flash('message');
     const success = req.flash('success');
+    const data = await Promise.all([
+      this.transactionService.getAllOrdersOnProgress(),
+      this.transactionService.getAllTransaction(true),
+    ]);
+    const setOfUsers = new Set(data[1].map((el) => el.user));
+    const payments = Array.from(setOfUsers).map((user) => {
+      const payment = data[1]
+        .filter((el) => el.user.email === user.email)
+        .reduce(
+          (sum, current) => sum + current.food.price * current.food.quantity,
+          0,
+        );
+      return {
+        user,
+        payment: payment + payment * 0.1 + 10000,
+      };
+    });
     return {
       layout: 'templates/main_layout',
       title: 'Orders On Progress',
       message,
       success,
-      belumBayar,
-      cooking,
-      deliver,
+      orders: data[0],
+      payments,
     };
   }
 
@@ -167,5 +177,40 @@ export class TransactionController {
     await this.transactionService.deleteById(transactionParam.id);
     req.flash('success', 'Transaction deleted successfully');
     return res.redirect('/transaction');
+  }
+
+  @Put('order/:id')
+  @UseFilters(new HttpExceptionFilter('/transaction/orders'))
+  async changeStatusTransaction(
+    @Param() statusParam: OrderParams,
+    @Query() query: StatusQueryDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const transaction = await this.transactionService.getTransactionById(
+      statusParam.id,
+    );
+    if (transaction === null)
+      throw new HttpException('Transaction Not Found', 404);
+    const data = await Promise.all([
+      this.transactionService.updateTransactionStatus(
+        statusParam.id,
+        query.status,
+      ),
+      this.transactionService.getOrderById(transaction.orderId),
+    ]);
+    const isFinished = data[1].transactions.filter(
+      (transaction) =>
+        transaction.food.status !== 'Canceled' &&
+        transaction.food.status !== 'Finished',
+    );
+
+    if (isFinished.length === 0)
+      await this.transactionService.changeOrderProgress(
+        transaction.orderId,
+        false,
+      );
+    req.flash('success', 'Status changed successfully');
+    return res.redirect('/transaction/orders');
   }
 }

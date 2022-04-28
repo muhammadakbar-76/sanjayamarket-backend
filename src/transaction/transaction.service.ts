@@ -25,6 +25,16 @@ export class TransactionService {
     }
   }
 
+  getAllOrdersOnProgress() {
+    try {
+      return this.orderRepo
+        .find({ isOnProgress: true })
+        .populate({ path: 'transactions', populate: 'user' });
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
   deleteById(id: string) {
     try {
       return this.transactionRepo.findByIdAndDelete(id);
@@ -42,9 +52,11 @@ export class TransactionService {
     }
   }
 
-  getAllTransaction() {
+  getAllTransaction(isForPayment = false) {
     try {
-      return this.transactionRepo.find().populate('user', 'id email');
+      return this.transactionRepo
+        .find({ ...(isForPayment ? { 'food.status': 'Belum_Bayar' } : {}) })
+        .populate('user');
     } catch (error) {
       this.client.instance().captureException(error);
     }
@@ -52,7 +64,9 @@ export class TransactionService {
 
   getTransactionByUserId(id: string) {
     try {
-      return this.transactionRepo.find({ user: id }).populate('food');
+      return this.transactionRepo.find({
+        user: id,
+      });
     } catch (error) {
       this.client.instance().captureException(error);
     }
@@ -64,6 +78,16 @@ export class TransactionService {
         _id: body.orderId,
         user: id,
         'food._id': body.foodId,
+      });
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  updateTransactionStatus(id: string, status: string) {
+    try {
+      return this.transactionRepo.findByIdAndUpdate(id, {
+        'food.status': status,
       });
     } catch (error) {
       this.client.instance().captureException(error);
@@ -102,9 +126,25 @@ export class TransactionService {
     }
   }
 
+  getOrderById(id: string) {
+    try {
+      return this.orderRepo.findById(id).populate('transactions');
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
   updateOrder(id: string, transactions: any[]) {
     try {
       return this.orderRepo.findByIdAndUpdate(id, { transactions });
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  changeOrderProgress(id: string, progress: boolean) {
+    try {
+      return this.orderRepo.findByIdAndUpdate(id, { isOnProgress: progress });
     } catch (error) {
       this.client.instance().captureException(error);
     }

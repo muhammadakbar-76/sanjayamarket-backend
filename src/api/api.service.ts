@@ -6,14 +6,20 @@ import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
 export class ApiService {
   constructor(@InjectSentry() private readonly client: SentryService) {}
 
-  sendMessage(email: string, id: string, message: string, total: number) {
+  sendMessage(
+    email: string,
+    id: string,
+    message: string,
+    total: number,
+    orderId: string,
+  ) {
     try {
       const sid = process.env.TWILIO_SID;
       const token = process.env.TWILIO_TOKEN;
       const client = twilio(sid, token);
       return client.messages.create({
         from: 'whatsapp:+14155238886',
-        body: `User ${id} dengan email ${email} telah memesan :\n${message}\nTotal Tagihan : ${total}`,
+        body: `Order ID: ${orderId}\n\nUser ${id} dengan email ${email} telah memesan :\n\n${message}\n\nTotal Tagihan : ${total}`,
         to: 'whatsapp:+6282251857550',
       });
     } catch (error) {

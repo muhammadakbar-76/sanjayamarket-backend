@@ -1,3 +1,9 @@
+const formatter = new Intl.NumberFormat('id-Id', {
+  style: 'currency',
+  currency: 'IDR',
+  maximumFractionDigits: 0,
+});
+
 $('#tblDataFood').DataTable({
   ajax: { url: '/food/get-all', dataSrc: '' },
   columns: [
@@ -29,7 +35,7 @@ $('#tblDataFood').DataTable({
       data: 'price',
       render: function (data) {
         return `<td style="white-space: normal;">
-      <p class="text-xs text-secondary mb-0">${data}</p>
+      <p class="text-xs text-secondary mb-0">${formatter.format(data)}</p>
   </td>`;
       },
     },
@@ -167,7 +173,7 @@ $('#tblDataOrders').DataTable({
       data: 'food.price',
       render: function (data) {
         return `<td style="white-space: normal;">
-      <p class="text-xs font-weight-bold mb-0">${data}</p>
+      <p class="text-xs font-weight-bold mb-0">${formatter.format(data)}</p>
   </td>`;
       },
     },
@@ -279,6 +285,32 @@ $('body').on('click', '.delete-transaction-btn', function (e) {
       Swal.fire({
         icon: 'success',
         title: 'Transaction has been deleted',
+        showConfirmButton: false,
+        timer: 2000,
+      }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+          $(`#${$(this).data('id')}`).submit();
+        }
+      });
+    }
+  });
+});
+
+$('.dropdown-item.change-status').on('click', function (e) {
+  e.preventDefault();
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, change it!',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Transaction Status has been changed',
         showConfirmButton: false,
         timer: 2000,
       }).then((result) => {
