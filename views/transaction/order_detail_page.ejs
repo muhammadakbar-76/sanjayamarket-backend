@@ -1,0 +1,31 @@
+<div class="container">
+    <div class="row">
+        <div class="col-10">
+            <h4 class="font-weight-bolder mb-3">Order Details</h4>
+            <h5>Order ID : <%= order.id %></h5>
+            <h5>Status   : <%= order.isOnProgress ? 'On Progress' : 'Finished' %></h5>
+            <h5>Transactions : </h5>
+            <% order.transactions.forEach(el => { %>
+                <div class="col-9 mb-4">
+                    <div class="card p-3 flex-row">
+                        <img src="/images/null.png" height="100" width="100" class="border rounded p-2 me-3" alt="">
+                        <div class="col-4 me-2">
+                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Transaction ID: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.id %></span></p>
+                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">User: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.user.email %></span></p>
+                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Item Name: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.food.name %></span></p>
+                        </div>
+                        <div class="col-4">
+                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Price: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= (el.food.price).toLocaleString('id-ID', {
+                              style: 'currency',
+                              currency: 'IDR',
+                              maximumFractionDigits: 0,
+                            }) %></span></p>
+                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Quantity: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.food.quantity %></span></p>
+                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Status: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.food.status %></span></p>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</div>

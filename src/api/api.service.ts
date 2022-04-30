@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import * as twilio from 'twilio';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
+import { TelegramService } from 'nestjs-telegram';
 
 @Injectable()
 export class ApiService {
-  constructor(@InjectSentry() private readonly client: SentryService) {}
+  constructor(
+    @InjectSentry() private readonly client: SentryService,
+    private readonly telegramService: TelegramService,
+  ) {}
 
   sendMessage(
     email: string,
@@ -14,22 +17,12 @@ export class ApiService {
     orderId: string,
   ) {
     try {
-      const sid = process.env.TWILIO_SID;
-      const token = process.env.TWILIO_TOKEN;
-      const client = twilio(sid, token);
-      return client.messages.create({
-        from: 'whatsapp:+14155238886',
-        body: `Order ID: ${orderId}\n\nUser ${id} dengan email ${email} telah memesan :\n\n${message}\n\nTotal Tagihan : ${total}`,
-        to: 'whatsapp:+6282251857550',
-      });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
-  }
-
-  sendMessageStatus(status: any) {
-    try {
-      this.client.instance().captureMessage(JSON.stringify(status));
+      return this.telegramService
+        .sendMessage({
+          chat_id: process.env.CHAT_ID_TELEGRAM,
+          text: `Order ID: ${orderId}\n\nUser ${id} dengan email ${email} telah memesan :\n\n${message}\n\nTotal Tagihan : ${total}`,
+        })
+        .toPromise();
     } catch (error) {
       this.client.instance().captureException(error);
     }

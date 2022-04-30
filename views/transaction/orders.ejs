@@ -1,132 +1,33 @@
 <div class="container">
-    <div class="row">
-        <h4 class="font-weight-bolder mb-3">On Proggress Orders</h4>
-        <% if (message.length > 0) { %>
-            <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
-                <strong>Oops! Something Wrong</strong>
-                <ul>
-                    <% message.forEach(element => { %>
-                     <li><%= element %></li>
-                    <% }) %>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
-              </div>
-        <% } %>
-        <% if (success.length > 0) { %>
-          <script nonce="<%= cspNonce %>">
-            toastr.success("<%= success %>", "Success!");
-          </script>
-          <% } %>
-          <nav>
-            <div class="nav nav-tabs" id="nav-tab" role="tablist">
-              <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Orders</button>
-              <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Payments</button>
-            </div>
-          </nav>
-          <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-              <div class="accordion bg bg-white rounded" id="accordionExample">
-                <% orders.forEach((order,i) => { %>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="<%= `heading-${i}` %>">
-                          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#<%= `collapse-${i}` %>" aria-expanded="true" aria-controls="<%= `collapse-${i}` %>">
-                            Order ID : <%= order.id %> 
-                          </button>
-                        </h2>
-                        <div id="<%= `collapse-${i}` %>" class="accordion-collapse collapse" aria-labelledby="<%= `heading-${i}` %>" data-bs-parent="#accordionExample">
-                          <div class="accordion-body bg bg-gradient-secondary pt-4 rounded">
-                            <% order.transactions.forEach(el => { %>
-                                <div class="col-9 mb-4">
-                                    <div class="card p-3 flex-row">
-                                        <img src="/images/null.png" height="100" width="100" class="border rounded p-2 me-3" alt="">
-                                        <div class="col-4 me-2">
-                                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Transaction ID: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.id %></span></p>
-                                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">User: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.user.email %></span></p>
-                                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Item Name: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.food.name %></span></p>
-                                        </div>
-                                        <div class="col-4">
-                                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Price: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= (el.food.price).toLocaleString('id-ID', {
-                                              style: 'currency',
-                                              currency: 'IDR',
-                                              maximumFractionDigits: 0,
-                                            }) %></span></p>
-                                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Quantity: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.food.quantity %></span></p>
-                                            <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Status: <span class="text-uppercase text-sm font-weight-bolder text-primary opacity-7"><%= el.food.status %></span></p>
-                                        </div>
-                                        <div class="col-2 text-center">
-                                           <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Actions</p>
-                                           <div class="dropdown">
-                                            <button class="btn bg-gradient-primary dropdown-toggle" type="button" id="<%= `dropdown-${i}` %>" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Status
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="<%= `dropdown-${i}` %>">
-                                              <li>
-                                                  <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Belum_Bayar" id="bayar-<%= el.id %>" method="post">
-                                                    <button type="submit" class="dropdown-item change-status" data-id="bayar-<%= el.id %>">Belum Bayar</button>
-                                                </form>
-                                              </li> 
-                                              <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Cooking" id="cooking-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="cooking-<%= el.id %>">Cooking</button>
-                                              </form>
-                                            </li>
-                                            <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Delivering" id="deliver-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="deliver-<%= el.id %>">Delivering</button>
-                                              </form>
-                                            </li>
-                                            <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Canceled" id="cancel-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="cancel-<%= el.id %>">Cancel</button>
-                                              </form>
-                                            </li>
-                                            <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Finished" id="finish-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="finish-<%= el.id %>">Finish</button>
-                                              </form>
-                                            </li> 
-                                            </ul>
-                                          </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <% }) %>
-                          </div>
-                        </div>
-                      </div>
+    <div class="d-flex justify-content-between">
+      <% if (message.length > 0) { %>
+        <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
+            <strong>Oops! Something Wrong</strong>
+            <ul>
+                <% message.forEach(element => { %>
+                 <li><%= element %></li>
                 <% }) %>
-              </div>
-            </div>
-            <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
-                <% payments.forEach(el => { %>
-                  <div class="card mb-3" style="max-width: 540px;">
-                    <div class="row g-0">
-                      <div class="col-md-4 d-flex">
-                        <img src="<%= el.user.photoPath %>" class="img-fluid rounded-start m-auto" alt="...">
-                      </div>
-                      <div class="col-md-8">
-                        <div class="card-body">
-                          <h5 class="card-title"><%= el.user.name %></h5>
-                          <p class="card-text">
-                            <ul>
-                              <li>Email     : <%= el.user.email %></li>
-                              <li>City      : <%= el.user.city %></li>
-                              <li>Address   : <%= el.user.address %></li>
-                              <li>Phone No. : <%= el.user.phoneNumber %></li>
-                              <li>House No. : <%= el.user.houseNumber %></li>
-                            </ul>
-                          </p>
-                          <p class="card-text"><small class="text-muted">Due Payment: <%= (el.payment).toLocaleString('id-ID', {
-                            style: 'currency',
-                            currency: 'IDR',
-                            maximumFractionDigits: 0,
-                          }) %></small></p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                <% }) %>
-            </div>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
           </div>
+    <% } %>
+    <% if (success.length > 0) { %>
+      <script nonce="<%= cspNonce %>">
+        toastr.success("<%= success %>", "Success!");
+      </script>
+      <% } %>
     </div>
-</div>
+      <div class="card mb-5">
+          <div class="table-responsive p-3">
+            <table class="table align-items-center mb-0" id="tblDataOrders">
+              <thead>
+                <tr>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">ID</th>
+                  <th class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7 ps-2">IsOnProgress</th>
+                  <th class="text-secondary opacity-7"></th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+      </div>
+  </div>

@@ -24,7 +24,7 @@ import { EditUserDto } from '../user/dto/edit-user.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { CreateRatingDto } from '../rating/dto/create-rating.dto';
 import { RatingService } from '../rating/rating.service';
-import { EditOrderDto } from '../transaction/dto/edit-order.dto';
+import { EditTransactionParamDto } from '../transaction/dto/edit-transaction-params.dto';
 import { User, UserDocument } from '../user/model/user.model';
 import { RefreshRequestDto } from '../user/dto/refresh-request.dto';
 import { SanitizeMongooseModelInterceptor } from 'nestjs-mongoose-exclude';
@@ -111,6 +111,7 @@ export class ApiController {
   async registerNewUser(
     @Body() user: CreateUserDto,
     @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
   ) {
     if (file !== undefined) {
       user.photoPath = `/images/${file.filename}`;
@@ -125,16 +126,16 @@ export class ApiController {
       60 * 60 * 24 * 30,
     );
     const payload = this.buildResponsePayload(newUser, token, refresh);
-    return {
+    return res.status(201).json({
       status: 'success',
       data: payload,
-    };
+    });
   }
 
   @Post('login')
   @Public()
   @UseGuards(ThrottlerGuard)
-  async login(@Body() credential: LoginDto) {
+  async login(@Body() credential: LoginDto, @Res() res: Response) {
     const user = await this.userService.login(credential);
     if (user == null)
       throw new HttpException('email or password is wrong', 400);
@@ -149,15 +150,15 @@ export class ApiController {
 
     const payload = this.buildResponsePayload(user, token, refresh);
 
-    return {
+    return res.status(200).json({
       status: 'success',
       data: payload,
-    };
+    });
   }
 
   @Post('refresh')
   @Public()
-  public async refresh(@Body() body: RefreshRequestDto) {
+  public async refresh(@Body() body: RefreshRequestDto, @Res() res: Response) {
     const { user, token } =
       await this.authService.createAccessTokenFromRefreshToken(
         body.refresh_token,
@@ -165,14 +166,18 @@ export class ApiController {
 
     const payload = this.buildResponsePayload(user, token);
 
-    return {
+    return res.status(200).json({
       status: 'success',
       data: payload,
-    };
+    });
   }
 
-  @Post('order')
-  async addTransaction(@Body() body: AddTransactionDto, @Req() req: Request) {
+  @Post('transaction')
+  async addTransaction(
+    @Body() body: AddTransactionDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const payload = req.user as payloadJWT;
     const foodsList = await Promise.all(
       body.food.map((id) => {
@@ -181,6 +186,7 @@ export class ApiController {
         return food;
       }),
     );
+    //TODO : add food orderCount
     const order = await this.transactionService.addOrder([]);
     const transactions = await Promise.all(
       foodsList.map((fl, i) => {
@@ -207,7 +213,7 @@ export class ApiController {
     const message = foodsList
       .map(
         (fl, i) =>
-          `${fl.name} sebanyak ${body.quantity[i]} dengan transactionId: ${transactions[i].id}\n`,
+          ` - ${fl.name} sebanyak ${body.quantity[i]} dengan transactionId: ${transactions[i].id}\n`,
       )
       .join('\n');
     await Promise.all([
@@ -216,80 +222,121 @@ export class ApiController {
         payload.email,
         payload.id,
         message,
-        total + total * 0.1 + 10000,
+        total,
         order.id,
       ),
+      ...foodsList.map((el, i) => {
+        const updateFood = this.foodService.updateFoodOrder(
+          el.orderCount + body.quantity[i],
+          el.id,
+        );
+        return updateFood;
+      }),
     ]);
-    return 'transaction success';
+    return res.status(201).json('transaction success');
   }
 
-  @Get('order')
+  @Get('transactions')
   async getTransactionByUserId(@Req() req: Request, @Res() res: Response) {
     const payload = req.user as payloadJWT;
-    const userOrders = await this.transactionService.getTransactionByUserId(
-      payload.id,
-    );
-    if (userOrders.length === 0)
-      throw new HttpException('User or Order Not Found', 404);
-    const total = userOrders
-      .filter((val) => val.food.status === 'Belum_Bayar')
+    const userTransactions =
+      await this.transactionService.getTransactionByUserId(payload.id);
+    if (userTransactions.length === 0)
+      throw new HttpException('User or Transaction Not Found', 404);
+    const total = userTransactions
+      .filter((val) => val.food.status === Status.Bayar)
       .reduce(
         (sum, current) => sum + current.food.price * current.food.quantity,
         0,
       );
     return res.status(200).json({
-      payments: total + total * 0.1 + total <= 0 ? 0 : 10000,
-      orders: userOrders,
+      payments: total + total * 0.1 + (total <= 0 ? 0 : 10000),
+      transactions: userTransactions,
     });
   }
 
-  @Put('order')
-  async cancelTransaction(@Body() body: EditOrderDto, @Req() req: Request) {
+  @Put('transaction')
+  async cancelTransaction(
+    @Body() body: EditTransactionParamDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const payload = req.user as payloadJWT;
-    const data = await this.transactionService.getTransaction(body, payload.id);
-    if (data === null) throw new HttpException('User or Order not found', 404);
-    if (data.food.status !== 'Belum_Bayar')
+    const data = await Promise.all([
+      this.transactionService.getTransaction(body, payload.id),
+      this.foodService.getById(body.foodId),
+    ]);
+    if (data[0] === null)
+      throw new HttpException('User or Order not found', 404);
+    if (data[0].food.status !== 'Belum_Bayar')
       throw new HttpException(
         "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
         400,
       );
-    return await this.transactionService.cancelTransaction(body, payload.id);
+    //TODO : if user cancel, decrease food orderCount
+    const result = await Promise.all([
+      this.foodService.updateFoodOrder(
+        data[1].orderCount - data[0].food.quantity,
+        body.foodId,
+      ),
+      this.transactionService.getOrderById(data[0].orderId),
+      this.transactionService.cancelTransaction(body, payload.id),
+    ]);
+    const isOnProgress = result[1].transactions.filter(
+      (transaction) =>
+        transaction.food.status !== Status.Cancel &&
+        transaction.food.status !== Status.Finish,
+    );
+    if (isOnProgress.length === 0) {
+      await this.transactionService.changeOrderProgress(data[0].orderId, false);
+    }
+    return res.status(200).json(result[2]);
   }
 
   @Post('rate')
-  async setRate(@Body() body: CreateRatingDto, @Req() req: Request) {
+  async setRate(
+    @Body() body: CreateRatingDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const payload = req.user as payloadJWT;
-    const isUserExisted = await this.userService.checkId(payload.id);
-    if (isUserExisted == null)
+    const data = await Promise.all([
+      this.userService.checkId(payload.id),
+      this.foodService.getById(body.food),
+      this.ratingService.checkRating(body, payload.id),
+    ]);
+    if (data[0] == null)
       throw new HttpException(
         "You already rated this food or user doesn't exist",
         400,
       );
-    const food = await this.foodService.getById(body.food);
-    if (food == null) throw new HttpException("food doesn't exist", 400);
-    const isAlreadyRated = await this.ratingService.checkRating(
-      body,
-      payload.id,
-    );
-    if (isAlreadyRated)
+    if (data[1] == null) throw new HttpException("food doesn't exist", 400);
+    if (data[2])
       throw new HttpException(
         "You already rated this food or user doesn't exist",
         400,
       );
     const newRate =
-      (food.rate * food.rateCount + body.rate) / (food.rateCount + 1);
-    await this.foodService.updateFoodRate(
-      {
-        rate: Number(newRate.toFixed(1)),
-        rateCount: food.rateCount + 1,
-      },
-      body.food,
-    );
-    return await this.ratingService.addRate(body, payload.id);
+      (data[1].rate * data[1].rateCount + body.rate) / (data[1].rateCount + 1);
+    const result = await Promise.all([
+      this.foodService.updateFoodRate(
+        {
+          rate: Number(newRate.toFixed(1)),
+          rateCount: data[1].rateCount + 1,
+        },
+        body.food,
+      ),
+      this.ratingService.addRate(body, payload.id),
+    ]);
+    return res.status(201).json(result[1]);
   }
 
   @Put('user')
-  async editUser(@Body() body: EditUserDto, @Req() req: Request) {
+  async editUser(
+    @Body() body: EditUserDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const payload = req.user as payloadJWT;
     const user = await this.userService.checkId(payload.id);
     if (user == null)
@@ -299,12 +346,6 @@ export class ApiController {
         throw new HttpException('User Not Existed or Old Password Wrong', 400);
     }
     await this.userService.editUser(payload.id, body);
-    return 'Your profile updated successfully';
-  }
-
-  @Post('twilio')
-  @Public()
-  sendMessageToApiStatus(@Body() body: any) {
-    this.apiService.sendMessageStatus(body);
+    return res.status(200).json('Your profile updated successfully');
   }
 }

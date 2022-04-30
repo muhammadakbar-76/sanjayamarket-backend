@@ -46,13 +46,13 @@
     "multer": "^1.4.4",
     "nestjs-form-data": "^1.6.1",
     "nestjs-mongoose-exclude": "^1.0.5",
+    "nestjs-telegram": "^1.2.0",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.2.0",
-    "twilio": "^3.76.1"
+    "rxjs": "^7.2.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",

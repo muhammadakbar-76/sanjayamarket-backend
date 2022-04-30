@@ -15,7 +15,11 @@
             <p class="text-sm text-secondary mb-0"><%= transaction.food.name %></p>
             <hr>
             <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Item Price</p>
-            <p class="text-sm text-secondary mb-0"><%= transaction.food.price %></p>
+            <p class="text-sm text-secondary mb-0"><%= (transaction.food.price).toLocaleString('id-ID',{
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0,
+            })%></p>
             <hr>
             <p class="text-uppercase text-secondary text-sm font-weight-bolder opacity-7">Quantity</p>
             <p class="text-sm text-secondary mb-0"><%= transaction.food.quantity %></p>
@@ -31,7 +35,11 @@
             <hr>
             <div class="d-flex justify-content-between">
                 <p class="text-uppercase text-secondary text-md font-weight-bolder opacity-7">Total</p>
-                <p class="text-uppercase text-secondary text-md font-weight-bolder opacity-7"><%= (transaction.food.price * transaction.food.quantity) %></p>
+                <p class="text-uppercase text-secondary text-md font-weight-bolder opacity-7"><%= (transaction.food.price * transaction.food.quantity).toLocaleString('id-ID',{
+                    style: 'currency',
+                    currency: 'IDR',
+                    maximumFractionDigits: 0,
+                }) %></p>
             </div>
         </div>
     </div>

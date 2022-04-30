@@ -92,21 +92,32 @@ export class TransactionController {
     ]);
     if (data[0] === null || data[1] === null)
       throw new HttpException('Order/Food not found', 404);
-    await this.transactionService.updateTransaction(transactionParam.id, {
-      orderId: data[0].orderId,
-      user: body.user,
-      food: {
-        _id: data[1]._id.toString(),
-        name: data[1].name,
-        price: data[1].price,
-        imageUrl: data[1].picturePath,
-        quantity: body.quantity,
-        status: body.status,
-      },
-      ...(body.date !== ''
-        ? { date: new Date(body.date).toLocaleDateString() }
-        : {}),
-    });
+    const result = await Promise.all([
+      this.transactionService.updateTransaction(transactionParam.id, {
+        orderId: data[0].orderId,
+        user: body.user,
+        food: {
+          _id: data[1]._id.toString(),
+          name: data[1].name,
+          price: data[1].price,
+          imageUrl: data[1].picturePath,
+          quantity: body.quantity,
+          status: body.status,
+        },
+        ...(body.date !== ''
+          ? { date: new Date(body.date).toLocaleDateString() }
+          : {}),
+      }),
+      this.transactionService.getOrderById(data[0].orderId),
+    ]);
+    const isOnProgress = result[1].transactions.filter(
+      (transaction) =>
+        transaction.food.status !== Status.Cancel &&
+        transaction.food.status !== Status.Finish,
+    );
+    if (isOnProgress.length === 0) {
+      await this.transactionService.changeOrderProgress(result[1].id, false);
+    }
     req.flash('success', 'Transaction has been successfully updated');
     res.redirect('/transaction');
   }
@@ -129,9 +140,41 @@ export class TransactionController {
     };
   }
 
-  @Get('orders')
+  @Get('order/detail/:id')
   @UseFilters(new HttpExceptionFilter('transaction/orders'))
+  @Render('transaction/order_detail_page')
+  async getOrderDetailPage(@Param() orderParam: OrderParams) {
+    const order = await this.transactionService.getOrderById(orderParam.id);
+    if (order === null) throw new HttpException('Order not found', 404);
+    return {
+      layout: 'templates/main_layout',
+      title: 'Order Details',
+      order,
+    };
+  }
+
+  @Get('orders')
   @Render('transaction/orders')
+  async showOrdersPage(@Req() req: Request) {
+    const message = req.flash('message');
+    const success = req.flash('success');
+    return {
+      layout: 'templates/main_layout',
+      title: 'Orders',
+      message,
+      success,
+    };
+  }
+
+  @Get('orders/get-all')
+  async getAllOrders(@Res() res: Response) {
+    const orders = await this.transactionService.getAllOrders();
+    return res.status(200).json(orders);
+  }
+
+  @Get('orders-on-progress')
+  @UseFilters(new HttpExceptionFilter('transaction/orders-on-progress'))
+  @Render('transaction/orders_on_progress')
   async showOnProgressOrderPage(@Req() req: Request) {
     const message = req.flash('message');
     const success = req.flash('success');
@@ -154,7 +197,7 @@ export class TransactionController {
     });
     return {
       layout: 'templates/main_layout',
-      title: 'Orders On Progress',
+      title: 'On Progress Orders',
       message,
       success,
       orders: data[0],
@@ -179,6 +222,20 @@ export class TransactionController {
     return res.redirect('/transaction');
   }
 
+  @Delete('order/:id')
+  @UseFilters(new HttpExceptionFilter('/orders'))
+  async deleteOrder(
+    @Param() orderParam: OrderParams,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const order = await this.transactionService.getOrderById(orderParam.id);
+    if (order === null) throw new HttpException('Order not found', 404);
+    await this.transactionService.deleteOrderById(orderParam.id);
+    req.flash('success', 'Order deleted successfully');
+    return res.redirect('/transaction/orders');
+  }
+
   @Put('order/:id')
   @UseFilters(new HttpExceptionFilter('/transaction/orders'))
   async changeStatusTransaction(
@@ -201,8 +258,8 @@ export class TransactionController {
     ]);
     const isFinished = data[1].transactions.filter(
       (transaction) =>
-        transaction.food.status !== 'Canceled' &&
-        transaction.food.status !== 'Finished',
+        transaction.food.status !== Status.Cancel &&
+        transaction.food.status !== Status.Finish,
     );
 
     if (isFinished.length === 0)

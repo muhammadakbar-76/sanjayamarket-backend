@@ -1,9 +1,9 @@
 import { IsMongoId, IsNotEmpty } from 'class-validator';
 
-export class EditOrderDto {
+export class EditTransactionParamDto {
   @IsNotEmpty()
   @IsMongoId()
-  readonly orderId: string;
+  readonly transactionId: string;
 
   @IsNotEmpty()
   @IsMongoId()

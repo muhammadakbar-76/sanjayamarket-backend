@@ -4,6 +4,41 @@ const formatter = new Intl.NumberFormat('id-Id', {
   maximumFractionDigits: 0,
 });
 
+$('#tblDataOrders').DataTable({
+  ajax: { url: '/transaction/orders/get-all', dataSrc: '' },
+  columns: [
+    {
+      data: '_id',
+      render: function (data) {
+        return `<td style="white-space: normal;">
+        <p class="text-xs font-weight-bold mb-0">${data}</p>
+    </td>`;
+      },
+    },
+    {
+      data: 'isOnProgress',
+      render: function (data) {
+        return `<td style="white-space: normal;">
+      <p class="text-xs text-secondary mb-0">${data}</p>
+  </td>`;
+      },
+    },
+    {
+      data: '_id',
+      render: function (data) {
+        return `<td class="align-middle">
+        <div class="d-flex justify-content-end">
+        <a href="/transaction/order/detail/${data}" class="font-weight-bold text-xs btn bg-gradient-secondary me-2">Details</a>
+          <form action="/transaction/order/${data}?_method=DELETE" method="post" id="${data}">
+           <button type="submit" class="font-weight-bold text-xs btn bg-gradient-danger delete-order-btn" data-id="${data}">Delete</button>
+           </form>
+           </div>
+       </td>`;
+      },
+    },
+  ],
+});
+
 $('#tblDataFood').DataTable({
   ajax: { url: '/food/get-all', dataSrc: '' },
   columns: [
@@ -150,7 +185,7 @@ $('#tblDataUser').DataTable({
   ],
 });
 
-$('#tblDataOrders').DataTable({
+$('#tblDataTransactions').DataTable({
   ajax: { url: '/transaction/get-all', dataSrc: '' },
   columns: [
     {
@@ -285,6 +320,32 @@ $('body').on('click', '.delete-transaction-btn', function (e) {
       Swal.fire({
         icon: 'success',
         title: 'Transaction has been deleted',
+        showConfirmButton: false,
+        timer: 2000,
+      }).then((result) => {
+        if (result.dismiss === Swal.DismissReason.timer) {
+          $(`#${$(this).data('id')}`).submit();
+        }
+      });
+    }
+  });
+});
+
+$('body').on('click', '.delete-order-btn', function (e) {
+  e.preventDefault();
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Order has been deleted',
         showConfirmButton: false,
         timer: 2000,
       }).then((result) => {

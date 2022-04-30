@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
 import { Transaction, TransactionDocument } from './model/transaction.model';
 import { Model } from 'mongoose';
-import { EditOrderDto } from './dto/edit-order.dto';
+import { EditTransactionParamDto } from './dto/edit-transaction-params.dto';
 import { SaveTransactionDto } from './dto/save-transaction.dto';
 import { Order, OrderDocument } from './model/order.model';
 
@@ -20,6 +20,14 @@ export class TransactionService {
   addTransaction(transaction: SaveTransactionDto) {
     try {
       return this.transactionRepo.create(transaction);
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
+  getAllOrders() {
+    try {
+      return this.orderRepo.find().populate('transactions');
     } catch (error) {
       this.client.instance().captureException(error);
     }
@@ -43,8 +51,15 @@ export class TransactionService {
     }
   }
 
+  deleteOrderById(id: string) {
+    try {
+      return this.orderRepo.findByIdAndDelete(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+    }
+  }
+
   updateTransaction(id: string, transaction: SaveTransactionDto) {
-    console.log(transaction);
     try {
       return this.transactionRepo.findByIdAndUpdate(id, transaction);
     } catch (error) {
@@ -72,10 +87,10 @@ export class TransactionService {
     }
   }
 
-  getTransaction(body: EditOrderDto, id: string) {
+  getTransaction(body: EditTransactionParamDto, id: string) {
     try {
       return this.transactionRepo.findOne({
-        _id: body.orderId,
+        _id: body.transactionId,
         user: id,
         'food._id': body.foodId,
       });
@@ -102,17 +117,17 @@ export class TransactionService {
     }
   }
 
-  async cancelTransaction(body: EditOrderDto, id: string) {
+  async cancelTransaction(body: EditTransactionParamDto, id: string) {
     try {
       await this.transactionRepo.updateOne(
         {
-          _id: body.orderId,
+          _id: body.transactionId,
           user: id,
           'food._id': body.foodId,
         },
         { 'food.status': 'Canceled' },
       );
-      return 'Your order successfully canceled';
+      return 'Your transaction successfully canceled';
     } catch (error) {
       this.client.instance().captureException(error);
     }
@@ -128,7 +143,9 @@ export class TransactionService {
 
   getOrderById(id: string) {
     try {
-      return this.orderRepo.findById(id).populate('transactions');
+      return this.orderRepo
+        .findById(id)
+        .populate({ path: 'transactions', populate: 'user' });
     } catch (error) {
       this.client.instance().captureException(error);
     }
