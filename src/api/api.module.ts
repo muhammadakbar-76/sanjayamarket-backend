@@ -6,7 +6,7 @@ import { UserModule } from '../user/user.module';
 import { RatingModule } from '../rating/rating.module';
 import { AuthModule } from '../auth/auth.module';
 import { ApiService } from './api.service';
-import { TelegramModule } from 'nestjs-telegram';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -15,8 +15,9 @@ import { TelegramModule } from 'nestjs-telegram';
     UserModule,
     RatingModule,
     AuthModule,
-    TelegramModule.forRoot({
-      botKey: process.env.TELEGRAM_BOT_KEY,
+    HttpModule.register({
+      timeout: 5000,
+      maxRedirects: 5,
     }),
   ],
   controllers: [ApiController],

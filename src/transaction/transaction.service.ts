@@ -18,152 +18,92 @@ export class TransactionService {
   ) {}
 
   addTransaction(transaction: SaveTransactionDto) {
-    try {
-      return this.transactionRepo.create(transaction);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.create(transaction);
   }
 
   getAllOrders() {
-    try {
-      return this.orderRepo.find().populate('transactions');
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo.find().populate('transactions');
   }
 
   getAllOrdersOnProgress() {
-    try {
-      return this.orderRepo
-        .find({ isOnProgress: true })
-        .populate({ path: 'transactions', populate: 'user' });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo
+      .find({ isOnProgress: true })
+      .populate({ path: 'transactions', populate: 'user' });
   }
 
   deleteById(id: string) {
-    try {
-      return this.transactionRepo.findByIdAndDelete(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.findByIdAndDelete(id);
   }
 
   deleteOrderById(id: string) {
-    try {
-      return this.orderRepo.findByIdAndDelete(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo.findByIdAndDelete(id);
   }
 
   updateTransaction(id: string, transaction: SaveTransactionDto) {
-    try {
-      return this.transactionRepo.findByIdAndUpdate(id, transaction);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.findByIdAndUpdate(id, transaction);
   }
 
   getAllTransaction(isForPayment = false) {
-    try {
-      return this.transactionRepo
-        .find({ ...(isForPayment ? { 'food.status': 'Belum_Bayar' } : {}) })
-        .populate('user');
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo
+      .find({ ...(isForPayment ? { 'food.status': 'Belum_Bayar' } : {}) })
+      .populate('user');
   }
 
   getTransactionByUserId(id: string) {
-    try {
-      return this.transactionRepo.find({
-        user: id,
-      });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.find({
+      user: id,
+    });
   }
 
   getTransaction(body: EditTransactionParamDto, id: string) {
-    try {
-      return this.transactionRepo.findOne({
-        _id: body.transactionId,
-        user: id,
-        'food._id': body.foodId,
-      });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.findOne({
+      _id: body.transactionId,
+      user: id,
+      'food._id': body.foodId,
+    });
   }
 
   updateTransactionStatus(id: string, status: string) {
-    try {
-      return this.transactionRepo.findByIdAndUpdate(id, {
-        'food.status': status,
-      });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.findByIdAndUpdate(id, {
+      'food.status': status,
+    });
   }
 
   getTransactionById(id: string) {
-    try {
-      return this.transactionRepo.findById(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.transactionRepo.findById(id);
   }
 
   async cancelTransaction(body: EditTransactionParamDto, id: string) {
-    try {
-      await this.transactionRepo.updateOne(
-        {
-          _id: body.transactionId,
-          user: id,
-          'food._id': body.foodId,
-        },
-        { 'food.status': 'Canceled' },
-      );
-      return 'Your transaction successfully canceled';
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    await this.transactionRepo.updateOne(
+      {
+        _id: body.transactionId,
+        user: id,
+        'food._id': body.foodId,
+      },
+      { 'food.status': 'Canceled' },
+    );
+    return 'Your transaction successfully canceled';
   }
 
   addOrder(transactions: string[]) {
-    try {
-      return this.orderRepo.create({ transactions });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo.create({ transactions });
   }
 
   getOrderById(id: string) {
-    try {
-      return this.orderRepo
-        .findById(id)
-        .populate({ path: 'transactions', populate: 'user' });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo
+      .findById(id)
+      .populate({ path: 'transactions', populate: 'user' });
   }
 
   updateOrder(id: string, transactions: any[]) {
-    try {
-      return this.orderRepo.findByIdAndUpdate(id, { transactions });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo.findByIdAndUpdate(id, { transactions });
   }
 
   changeOrderProgress(id: string, progress: boolean) {
-    try {
-      return this.orderRepo.findByIdAndUpdate(id, { isOnProgress: progress });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.orderRepo.findByIdAndUpdate(id, { isOnProgress: progress });
+  }
+
+  sendError(e: any) {
+    this.client.instance().captureException(e);
   }
 }

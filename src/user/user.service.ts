@@ -20,89 +20,53 @@ export class UserService {
   ) {}
 
   getAll() {
-    try {
-      return this.userRepo.find();
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.find();
   }
 
   getAllForTransaction() {
-    try {
-      return this.userRepo.find({ role: 'user' }).select('id email');
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.find({ role: 'user' }).select('id email');
   }
 
   deleteById(id: string) {
-    try {
-      return this.userRepo.findByIdAndDelete(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.findByIdAndDelete(id);
   }
 
   register(user: SaveUserDto) {
-    try {
-      return this.userRepo.create(user);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.create(user);
   }
 
   checkEmail(email: string) {
-    try {
-      return this.userRepo.findOne({ email });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.findOne({ email });
   }
 
   login(credential: LoginDto) {
-    try {
-      return this.userRepo.findOne({ email: credential.email });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.findOne({ email: credential.email });
   }
 
   checkId(id: string) {
-    try {
-      return this.userRepo.findById(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.findById(id);
   }
 
   editUser(id: string, user: SaveUserDto) {
-    try {
-      return this.userRepo.updateOne({ _id: id }, user);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.userRepo.updateOne({ _id: id }, user);
   }
 
   //* Refresh Token Services
   createRefreshToken(userId: string, ttl: number) {
-    try {
-      const expiration = new Date();
-      expiration.setTime(expiration.getTime() + ttl);
-      return this.refreshRepo.create({
-        user: userId,
-        is_revoked: false,
-        expires: expiration,
-      });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    const expiration = new Date();
+    expiration.setTime(expiration.getTime() + ttl);
+    return this.refreshRepo.create({
+      user: userId,
+      is_revoked: false,
+      expires: expiration,
+    });
   }
 
   findTokenById(id: string) {
-    try {
-      return this.refreshRepo.findById(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.refreshRepo.findById(id);
+  }
+
+  sendError(e: any) {
+    this.client.instance().captureException(e);
   }
 }

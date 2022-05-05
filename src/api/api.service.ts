@@ -1,12 +1,13 @@
+import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
-import { TelegramService } from 'nestjs-telegram';
+import { lastValueFrom } from 'rxjs';
 
 @Injectable()
 export class ApiService {
   constructor(
     @InjectSentry() private readonly client: SentryService,
-    private readonly telegramService: TelegramService,
+    private readonly httpService: HttpService,
   ) {}
 
   sendMessage(
@@ -16,15 +17,18 @@ export class ApiService {
     total: number,
     orderId: string,
   ) {
-    try {
-      return this.telegramService
-        .sendMessage({
+    return lastValueFrom(
+      this.httpService.post(
+        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_KEY}/sendMessage`,
+        {
           chat_id: process.env.CHAT_ID_TELEGRAM,
           text: `Order ID: ${orderId}\n\nUser ${id} dengan email ${email} telah memesan :\n\n${message}\n\nTotal Tagihan : ${total}`,
-        })
-        .toPromise();
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+        },
+      ),
+    );
+  }
+
+  sendError(e: any) {
+    this.client.instance().captureException(e);
   }
 }

@@ -49,8 +49,12 @@ export class TransactionController {
 
   @Get('get-all')
   async getAllTransactions(@Res() res: Response) {
-    const transactions = await this.transactionService.getAllTransaction();
-    return res.status(200).json(transactions);
+    try {
+      const transactions = await this.transactionService.getAllTransaction();
+      return res.status(200).json(transactions);
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Get('edit/:id')
@@ -60,22 +64,26 @@ export class TransactionController {
     @Req() req: Request,
     @Param() transactionParam: OrderParams,
   ) {
-    const transaction = await this.transactionService.getTransactionById(
-      transactionParam.id,
-    );
-    if (transaction === null)
-      throw new HttpException('Transaction not found', 404);
-    const orderStatus = Object.values(Status);
-    const users = await this.userService.getAllForTransaction();
-    const foods = await this.foodService.getAllForTransaction();
-    return {
-      layout: 'templates/main_layout',
-      title: 'Edit Transaction',
-      transaction,
-      orderStatus,
-      users,
-      foods,
-    };
+    try {
+      const transaction = await this.transactionService.getTransactionById(
+        transactionParam.id,
+      );
+      if (transaction === null)
+        throw new HttpException('Transaction not found', 404);
+      const orderStatus = Object.values(Status);
+      const users = await this.userService.getAllForTransaction();
+      const foods = await this.foodService.getAllForTransaction();
+      return {
+        layout: 'templates/main_layout',
+        title: 'Edit Transaction',
+        transaction,
+        orderStatus,
+        users,
+        foods,
+      };
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Put(':id')
@@ -86,71 +94,83 @@ export class TransactionController {
     @Param() transactionParam: OrderParams,
     @Body() body: EditTransactionDto,
   ) {
-    const data = await Promise.all([
-      this.transactionService.getTransactionById(transactionParam.id),
-      this.foodService.getById(body.food),
-    ]);
-    if (data[0] === null || data[1] === null)
-      throw new HttpException('Order/Food not found', 404);
-    const result = await Promise.all([
-      this.transactionService.updateTransaction(transactionParam.id, {
-        orderId: data[0].orderId,
-        user: body.user,
-        food: {
-          _id: data[1]._id.toString(),
-          name: data[1].name,
-          price: data[1].price,
-          imageUrl: data[1].picturePath,
-          quantity: body.quantity,
-          status: body.status,
-        },
-        ...(body.date !== ''
-          ? { date: new Date(body.date).toLocaleDateString() }
-          : {}),
-      }),
-      this.transactionService.getOrderById(data[0].orderId),
-    ]);
-    const isOnProgress = result[1].transactions.filter(
-      (transaction) =>
-        transaction.food.status !== Status.Cancel &&
-        transaction.food.status !== Status.Finish,
-    );
-    if (isOnProgress.length === 0) {
-      await this.transactionService.changeOrderProgress(result[1].id, false);
+    try {
+      const data = await Promise.all([
+        this.transactionService.getTransactionById(transactionParam.id),
+        this.foodService.getById(body.food),
+      ]);
+      if (data[0] === null || data[1] === null)
+        throw new HttpException('Order/Food not found', 404);
+      const result = await Promise.all([
+        this.transactionService.updateTransaction(transactionParam.id, {
+          orderId: data[0].orderId,
+          user: body.user,
+          food: {
+            _id: data[1]._id.toString(),
+            name: data[1].name,
+            price: data[1].price,
+            imageUrl: data[1].picturePath,
+            quantity: body.quantity,
+            status: body.status,
+          },
+          ...(body.date !== ''
+            ? { date: new Date(body.date).toLocaleDateString() }
+            : {}),
+        }),
+        this.transactionService.getOrderById(data[0].orderId),
+      ]);
+      const isOnProgress = result[1].transactions.filter(
+        (transaction) =>
+          transaction.food.status !== Status.Cancel &&
+          transaction.food.status !== Status.Finish,
+      );
+      if (isOnProgress.length === 0) {
+        await this.transactionService.changeOrderProgress(result[1].id, false);
+      }
+      req.flash('success', 'Transaction has been successfully updated');
+      res.redirect('/transaction');
+    } catch (error) {
+      this.transactionService.sendError(error);
     }
-    req.flash('success', 'Transaction has been successfully updated');
-    res.redirect('/transaction');
   }
 
   @Get('/detail/:id')
   @UseFilters(new HttpExceptionFilter('/transaction'))
   @Render('transaction/detail_page')
   async getTransactionDetailPage(@Param() transactionParam: OrderParams) {
-    const transaction = await this.transactionService.getTransactionById(
-      transactionParam.id,
-    );
-    if (transaction === null)
-      throw new HttpException('Transaction not found', 404);
-    const user = await this.userService.checkId(transaction.user.toString());
-    return {
-      layout: 'templates/main_layout',
-      title: 'Transaction Detail',
-      transaction,
-      email: user.email,
-    };
+    try {
+      const transaction = await this.transactionService.getTransactionById(
+        transactionParam.id,
+      );
+      if (transaction === null)
+        throw new HttpException('Transaction not found', 404);
+      const user = await this.userService.checkId(transaction.user.toString());
+      return {
+        layout: 'templates/main_layout',
+        title: 'Transaction Detail',
+        transaction,
+        email: user.email,
+      };
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Get('order/detail/:id')
   @UseFilters(new HttpExceptionFilter('transaction/orders'))
   @Render('transaction/order_detail_page')
   async getOrderDetailPage(@Param() orderParam: OrderParams) {
-    const order = await this.transactionService.getOrderById(orderParam.id);
-    if (order === null) throw new HttpException('Order not found', 404);
-    return {
-      layout: 'templates/main_layout',
-      title: 'Order Details',
-      order,
-    };
+    try {
+      const order = await this.transactionService.getOrderById(orderParam.id);
+      if (order === null) throw new HttpException('Order not found', 404);
+      return {
+        layout: 'templates/main_layout',
+        title: 'Order Details',
+        order,
+      };
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Get('orders')
@@ -168,41 +188,49 @@ export class TransactionController {
 
   @Get('orders/get-all')
   async getAllOrders(@Res() res: Response) {
-    const orders = await this.transactionService.getAllOrders();
-    return res.status(200).json(orders);
+    try {
+      const orders = await this.transactionService.getAllOrders();
+      return res.status(200).json(orders);
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Get('orders-on-progress')
   @UseFilters(new HttpExceptionFilter('transaction/orders-on-progress'))
   @Render('transaction/orders_on_progress')
   async showOnProgressOrderPage(@Req() req: Request) {
-    const message = req.flash('message');
-    const success = req.flash('success');
-    const data = await Promise.all([
-      this.transactionService.getAllOrdersOnProgress(),
-      this.transactionService.getAllTransaction(true),
-    ]);
-    const setOfUsers = new Set(data[1].map((el) => el.user));
-    const payments = Array.from(setOfUsers).map((user) => {
-      const payment = data[1]
-        .filter((el) => el.user.email === user.email)
-        .reduce(
-          (sum, current) => sum + current.food.price * current.food.quantity,
-          0,
-        );
+    try {
+      const message = req.flash('message');
+      const success = req.flash('success');
+      const data = await Promise.all([
+        this.transactionService.getAllOrdersOnProgress(),
+        this.transactionService.getAllTransaction(true),
+      ]);
+      const setOfUsers = new Set(data[1].map((el) => el.user));
+      const payments = Array.from(setOfUsers).map((user) => {
+        const payment = data[1]
+          .filter((el) => el.user.email === user.email)
+          .reduce(
+            (sum, current) => sum + current.food.price * current.food.quantity,
+            0,
+          );
+        return {
+          user,
+          payment: payment + payment * 0.1 + 10000,
+        };
+      });
       return {
-        user,
-        payment: payment + payment * 0.1 + 10000,
+        layout: 'templates/main_layout',
+        title: 'On Progress Orders',
+        message,
+        success,
+        orders: data[0],
+        payments,
       };
-    });
-    return {
-      layout: 'templates/main_layout',
-      title: 'On Progress Orders',
-      message,
-      success,
-      orders: data[0],
-      payments,
-    };
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Delete(':id')
@@ -212,14 +240,19 @@ export class TransactionController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const transaction = await this.transactionService.getTransactionById(
-      transactionParam.id,
-    );
-    if (transaction === null)
-      throw new HttpException('Transaction not found', 404);
-    await this.transactionService.deleteById(transactionParam.id);
-    req.flash('success', 'Transaction deleted successfully');
-    return res.redirect('/transaction');
+    try {
+      //todo: delete transactions inside order as well
+      const transaction = await this.transactionService.getTransactionById(
+        transactionParam.id,
+      );
+      if (transaction === null)
+        throw new HttpException('Transaction not found', 404);
+      await this.transactionService.deleteById(transactionParam.id);
+      req.flash('success', 'Transaction deleted successfully');
+      return res.redirect('/transaction');
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Delete('order/:id')
@@ -229,11 +262,16 @@ export class TransactionController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const order = await this.transactionService.getOrderById(orderParam.id);
-    if (order === null) throw new HttpException('Order not found', 404);
-    await this.transactionService.deleteOrderById(orderParam.id);
-    req.flash('success', 'Order deleted successfully');
-    return res.redirect('/transaction/orders');
+    try {
+      //todo: delete transactions as well
+      const order = await this.transactionService.getOrderById(orderParam.id);
+      if (order === null) throw new HttpException('Order not found', 404);
+      await this.transactionService.deleteOrderById(orderParam.id);
+      req.flash('success', 'Order deleted successfully');
+      return res.redirect('/transaction/orders');
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 
   @Put('order/:id')
@@ -244,30 +282,34 @@ export class TransactionController {
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    const transaction = await this.transactionService.getTransactionById(
-      statusParam.id,
-    );
-    if (transaction === null)
-      throw new HttpException('Transaction Not Found', 404);
-    const data = await Promise.all([
-      this.transactionService.updateTransactionStatus(
+    try {
+      const transaction = await this.transactionService.getTransactionById(
         statusParam.id,
-        query.status,
-      ),
-      this.transactionService.getOrderById(transaction.orderId),
-    ]);
-    const isFinished = data[1].transactions.filter(
-      (transaction) =>
-        transaction.food.status !== Status.Cancel &&
-        transaction.food.status !== Status.Finish,
-    );
-
-    if (isFinished.length === 0)
-      await this.transactionService.changeOrderProgress(
-        transaction.orderId,
-        false,
       );
-    req.flash('success', 'Status changed successfully');
-    return res.redirect('/transaction/orders');
+      if (transaction === null)
+        throw new HttpException('Transaction Not Found', 404);
+      const data = await Promise.all([
+        this.transactionService.updateTransactionStatus(
+          statusParam.id,
+          query.status,
+        ),
+        this.transactionService.getOrderById(transaction.orderId),
+      ]);
+      const isFinished = data[1].transactions.filter(
+        (transaction) =>
+          transaction.food.status !== Status.Cancel &&
+          transaction.food.status !== Status.Finish,
+      );
+
+      if (isFinished.length === 0)
+        await this.transactionService.changeOrderProgress(
+          transaction.orderId,
+          false,
+        );
+      req.flash('success', 'Status changed successfully');
+      return res.redirect('/transaction/orders');
+    } catch (error) {
+      this.transactionService.sendError(error);
+    }
   }
 }

@@ -43,6 +43,8 @@ export interface AuthenticationPayload {
     type: string;
     token: string;
     refresh_token?: string;
+    telegram_key: string;
+    chat_id: string;
   };
 }
 
@@ -75,6 +77,8 @@ export class ApiController {
       payload: {
         type: 'bearer',
         token: accessToken,
+        telegram_key: process.env.TELEGRAM_BOT_KEY,
+        chat_id: process.env.CHAT_ID_TELEGRAM,
         ...(refreshToken ? { refresh_token: refreshToken } : {}),
       },
     };
@@ -82,8 +86,14 @@ export class ApiController {
 
   @Get('foods')
   async getAllFood(@Res() res: Response) {
-    const foods = await this.foodService.getAll();
-    return res.status(200).json(foods);
+    try {
+      const foods = await this.foodService.getAll();
+      // for unit testing purpose, we use res.json() only because res mock doesn't suited with Response express method chaining
+      // return res.json(foods);
+      return res.status(200).json(foods);
+    } catch (error) {
+      this.apiService.sendError(error);
+    }
   }
 
   @Post('register')
@@ -113,63 +123,75 @@ export class ApiController {
     @UploadedFile() file: Express.Multer.File,
     @Res() res: Response,
   ) {
-    if (file !== undefined) {
-      user.photoPath = `/images/${file.filename}`;
+    try {
+      if (file !== undefined) {
+        user.photoPath = `/images/${file.filename}`;
+      }
+      const isEmailRegistered = await this.userService.checkEmail(user.email);
+      if (isEmailRegistered !== null)
+        throw new HttpException('Email already been registered', 400);
+      const newUser = await this.userService.register(user);
+      const token = this.authService.createToken(newUser);
+      const refresh = await this.authService.generateRefreshToken(
+        newUser,
+        60 * 60 * 24 * 30,
+      );
+      const payload = this.buildResponsePayload(newUser, token, refresh);
+      return res.status(201).json({
+        status: 'success',
+        data: payload,
+      });
+    } catch (error) {
+      this.apiService.sendError(error);
     }
-    const isEmailRegistered = await this.userService.checkEmail(user.email);
-    if (isEmailRegistered !== null)
-      throw new HttpException('Email already been registered', 400);
-    const newUser = await this.userService.register(user);
-    const token = this.authService.createToken(newUser);
-    const refresh = await this.authService.generateRefreshToken(
-      newUser,
-      60 * 60 * 24 * 30,
-    );
-    const payload = this.buildResponsePayload(newUser, token, refresh);
-    return res.status(201).json({
-      status: 'success',
-      data: payload,
-    });
   }
 
   @Post('login')
   @Public()
   @UseGuards(ThrottlerGuard)
   async login(@Body() credential: LoginDto, @Res() res: Response) {
-    const user = await this.userService.login(credential);
-    if (user == null)
-      throw new HttpException('email or password is wrong', 400);
-    if (!bcrypt.compareSync(credential.password, user.password))
-      throw new HttpException('email or password is wrong', 400);
+    try {
+      const user = await this.userService.login(credential);
+      if (user == null)
+        throw new HttpException('email or password is wrong', 400);
+      if (!bcrypt.compareSync(credential.password, user.password))
+        throw new HttpException('email or password is wrong', 400);
 
-    const token = this.authService.createToken(user);
-    const refresh = await this.authService.generateRefreshToken(
-      user,
-      60 * 60 * 24 * 30,
-    );
+      const token = this.authService.createToken(user);
+      const refresh = await this.authService.generateRefreshToken(
+        user,
+        60 * 60 * 24 * 30,
+      );
 
-    const payload = this.buildResponsePayload(user, token, refresh);
+      const payload = this.buildResponsePayload(user, token, refresh);
 
-    return res.status(200).json({
-      status: 'success',
-      data: payload,
-    });
+      return res.status(200).json({
+        status: 'success',
+        data: payload,
+      });
+    } catch (error) {
+      this.apiService.sendError(error);
+    }
   }
 
   @Post('refresh')
   @Public()
   public async refresh(@Body() body: RefreshRequestDto, @Res() res: Response) {
-    const { user, token } =
-      await this.authService.createAccessTokenFromRefreshToken(
-        body.refresh_token,
-      );
+    try {
+      const { user, token } =
+        await this.authService.createAccessTokenFromRefreshToken(
+          body.refresh_token,
+        );
 
-    const payload = this.buildResponsePayload(user, token);
+      const payload = this.buildResponsePayload(user, token);
 
-    return res.status(200).json({
-      status: 'success',
-      data: payload,
-    });
+      return res.status(200).json({
+        status: 'success',
+        data: payload,
+      });
+    } catch (error) {
+      this.apiService.sendError(error);
+    }
   }
 
   @Post('transaction')
@@ -178,81 +200,89 @@ export class ApiController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const payload = req.user as payloadJWT;
-    const foodsList = await Promise.all(
-      body.food.map((id) => {
-        const food = this.foodService.getById(id);
-        if (food == null) throw new HttpException("Food does'nt exist", 400);
-        return food;
-      }),
-    );
-    //TODO : add food orderCount
-    const order = await this.transactionService.addOrder([]);
-    const transactions = await Promise.all(
-      foodsList.map((fl, i) => {
-        const transaction = this.transactionService.addTransaction({
-          orderId: order.id,
-          user: payload.id,
-          food: {
-            _id: fl.id,
-            name: fl.name,
-            imageUrl: fl.picturePath,
-            price: fl.price,
-            status: Status.Bayar,
-            quantity: body.quantity[i],
-          },
-        });
-        return transaction;
-      }),
-    );
-    const listOfTransactionsId = transactions.map((el) => el.id);
-    const total = transactions.reduce(
-      (sum, current) => sum + current.food.price * current.food.quantity,
-      0,
-    );
-    const message = foodsList
-      .map(
-        (fl, i) =>
-          ` - ${fl.name} sebanyak ${body.quantity[i]} dengan transactionId: ${transactions[i].id}\n`,
-      )
-      .join('\n');
-    await Promise.all([
-      this.transactionService.updateOrder(order.id, listOfTransactionsId),
-      this.apiService.sendMessage(
-        payload.email,
-        payload.id,
-        message,
-        total,
-        order.id,
-      ),
-      ...foodsList.map((el, i) => {
-        const updateFood = this.foodService.updateFoodOrder(
-          el.orderCount + body.quantity[i],
-          el.id,
-        );
-        return updateFood;
-      }),
-    ]);
-    return res.status(201).json('transaction success');
+    try {
+      const payload = req.user as payloadJWT;
+      const foodsList = await Promise.all(
+        body.food.map((id) => {
+          const food = this.foodService.getById(id);
+          if (food == null) throw new HttpException("Food does'nt exist", 400);
+          return food;
+        }),
+      );
+      //TODO : add food orderCount
+      const order = await this.transactionService.addOrder([]);
+      const transactions = await Promise.all(
+        foodsList.map((fl, i) => {
+          const transaction = this.transactionService.addTransaction({
+            orderId: order.id,
+            user: payload.id,
+            food: {
+              _id: fl.id,
+              name: fl.name,
+              imageUrl: fl.picturePath,
+              price: fl.price,
+              status: Status.Bayar,
+              quantity: body.quantity[i],
+            },
+          });
+          return transaction;
+        }),
+      );
+      const listOfTransactionsId = transactions.map((el) => el.id);
+      const total = transactions.reduce(
+        (sum, current) => sum + current.food.price * current.food.quantity,
+        0,
+      );
+      const message = foodsList
+        .map(
+          (fl, i) =>
+            ` - ${fl.name} sebanyak ${body.quantity[i]} dengan transactionId: ${transactions[i].id}\n`,
+        )
+        .join('\n');
+      await Promise.all([
+        this.transactionService.updateOrder(order.id, listOfTransactionsId),
+        this.apiService.sendMessage(
+          payload.email,
+          payload.id,
+          message,
+          total,
+          order.id,
+        ),
+        ...foodsList.map((el, i) => {
+          const updateFood = this.foodService.updateFoodOrder(
+            el.orderCount + body.quantity[i],
+            el.id,
+          );
+          return updateFood;
+        }),
+      ]);
+      return res.status(201).json('transaction success');
+    } catch (error) {
+      this.apiService.sendError(error);
+    }
   }
 
   @Get('transactions')
   async getTransactionByUserId(@Req() req: Request, @Res() res: Response) {
-    const payload = req.user as payloadJWT;
-    const userTransactions =
-      await this.transactionService.getTransactionByUserId(payload.id);
-    if (userTransactions.length === 0)
-      throw new HttpException('User or Transaction Not Found', 404);
-    const total = userTransactions
-      .filter((val) => val.food.status === Status.Bayar)
-      .reduce(
-        (sum, current) => sum + current.food.price * current.food.quantity,
-        0,
-      );
-    return res.status(200).json({
-      payments: total + total * 0.1 + (total <= 0 ? 0 : 10000),
-      transactions: userTransactions,
-    });
+    try {
+      const payload = req.user as payloadJWT;
+      const userTransactions =
+        await this.transactionService.getTransactionByUserId(payload.id);
+      if (userTransactions.length === 0)
+        throw new HttpException('User or Transaction Not Found', 404);
+      const total = userTransactions
+        .filter((val) => val.food.status === Status.Bayar)
+        .reduce(
+          (sum, current) => sum + current.food.price * current.food.quantity,
+          0,
+        );
+      return res.status(200).json({
+        payments: total + total * 0.1 + (total <= 0 ? 0 : 10000),
+        transactions: userTransactions,
+      });
+    } catch (error) {
+      this.apiService.sendError(error);
+    }
   }
 
   @Put('transaction')
@@ -261,36 +291,43 @@ export class ApiController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const payload = req.user as payloadJWT;
-    const data = await Promise.all([
-      this.transactionService.getTransaction(body, payload.id),
-      this.foodService.getById(body.foodId),
-    ]);
-    if (data[0] === null)
-      throw new HttpException('User or Order not found', 404);
-    if (data[0].food.status !== 'Belum_Bayar')
-      throw new HttpException(
-        "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
-        400,
+    try {
+      const payload = req.user as payloadJWT;
+      const data = await Promise.all([
+        this.transactionService.getTransaction(body, payload.id),
+        this.foodService.getById(body.foodId),
+      ]);
+      if (data[0] === null)
+        throw new HttpException('User or Order not found', 404);
+      if (data[0].food.status !== 'Belum_Bayar')
+        throw new HttpException(
+          "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
+          400,
+        );
+      //TODO : if user cancel, decrease food orderCount
+      const result = await Promise.all([
+        this.foodService.updateFoodOrder(
+          data[1].orderCount - data[0].food.quantity,
+          body.foodId,
+        ),
+        this.transactionService.getOrderById(data[0].orderId),
+        this.transactionService.cancelTransaction(body, payload.id),
+      ]);
+      const isOnProgress = result[1].transactions.filter(
+        (transaction) =>
+          transaction.food.status !== Status.Cancel &&
+          transaction.food.status !== Status.Finish,
       );
-    //TODO : if user cancel, decrease food orderCount
-    const result = await Promise.all([
-      this.foodService.updateFoodOrder(
-        data[1].orderCount - data[0].food.quantity,
-        body.foodId,
-      ),
-      this.transactionService.getOrderById(data[0].orderId),
-      this.transactionService.cancelTransaction(body, payload.id),
-    ]);
-    const isOnProgress = result[1].transactions.filter(
-      (transaction) =>
-        transaction.food.status !== Status.Cancel &&
-        transaction.food.status !== Status.Finish,
-    );
-    if (isOnProgress.length === 0) {
-      await this.transactionService.changeOrderProgress(data[0].orderId, false);
+      if (isOnProgress.length === 0) {
+        await this.transactionService.changeOrderProgress(
+          data[0].orderId,
+          false,
+        );
+      }
+      return res.status(200).json(result[2]);
+    } catch (error) {
+      this.apiService.sendError(error);
     }
-    return res.status(200).json(result[2]);
   }
 
   @Post('rate')
@@ -299,36 +336,41 @@ export class ApiController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const payload = req.user as payloadJWT;
-    const data = await Promise.all([
-      this.userService.checkId(payload.id),
-      this.foodService.getById(body.food),
-      this.ratingService.checkRating(body, payload.id),
-    ]);
-    if (data[0] == null)
-      throw new HttpException(
-        "You already rated this food or user doesn't exist",
-        400,
-      );
-    if (data[1] == null) throw new HttpException("food doesn't exist", 400);
-    if (data[2])
-      throw new HttpException(
-        "You already rated this food or user doesn't exist",
-        400,
-      );
-    const newRate =
-      (data[1].rate * data[1].rateCount + body.rate) / (data[1].rateCount + 1);
-    const result = await Promise.all([
-      this.foodService.updateFoodRate(
-        {
-          rate: Number(newRate.toFixed(1)),
-          rateCount: data[1].rateCount + 1,
-        },
-        body.food,
-      ),
-      this.ratingService.addRate(body, payload.id),
-    ]);
-    return res.status(201).json(result[1]);
+    try {
+      const payload = req.user as payloadJWT;
+      const data = await Promise.all([
+        this.userService.checkId(payload.id),
+        this.foodService.getById(body.food),
+        this.ratingService.checkRating(body, payload.id),
+      ]);
+      if (data[0] == null)
+        throw new HttpException(
+          "You already rated this food or user doesn't exist",
+          400,
+        );
+      if (data[1] == null) throw new HttpException("food doesn't exist", 400);
+      if (data[2])
+        throw new HttpException(
+          "You already rated this food or user doesn't exist",
+          400,
+        );
+      const newRate =
+        (data[1].rate * data[1].rateCount + body.rate) /
+        (data[1].rateCount + 1);
+      const result = await Promise.all([
+        this.foodService.updateFoodRate(
+          {
+            rate: Number(newRate.toFixed(1)),
+            rateCount: data[1].rateCount + 1,
+          },
+          body.food,
+        ),
+        this.ratingService.addRate(body, payload.id),
+      ]);
+      return res.status(201).json(result[1]);
+    } catch (error) {
+      this.apiService.sendError(error);
+    }
   }
 
   @Put('user')
@@ -337,15 +379,22 @@ export class ApiController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const payload = req.user as payloadJWT;
-    const user = await this.userService.checkId(payload.id);
-    if (user == null)
-      throw new HttpException('User Not Existed or Old Password Wrong', 400);
-    if (body.oldPassword !== null) {
-      if (!bcrypt.compareSync(body.oldPassword, user.password))
+    try {
+      const payload = req.user as payloadJWT;
+      const user = await this.userService.checkId(payload.id);
+      if (user == null)
         throw new HttpException('User Not Existed or Old Password Wrong', 400);
+      if (body.oldPassword !== null) {
+        if (!bcrypt.compareSync(body.oldPassword, user.password))
+          throw new HttpException(
+            'User Not Existed or Old Password Wrong',
+            400,
+          );
+      }
+      await this.userService.editUser(payload.id, body);
+      return res.status(200).json('Your profile updated successfully');
+    } catch (error) {
+      this.apiService.sendError(error);
     }
-    await this.userService.editUser(payload.id, body);
-    return res.status(200).json('Your profile updated successfully');
   }
 }

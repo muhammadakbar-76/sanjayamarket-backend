@@ -13,71 +13,43 @@ export class FoodService {
   ) {}
 
   getAll() {
-    try {
-      return this.foodRepo.find();
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.find();
   }
 
   getAllForTransaction() {
-    try {
-      return this.foodRepo.find().select('id name price');
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.find().select('id name price');
   }
 
   getById(id: string) {
-    try {
-      return this.foodRepo.findById(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.findById(id);
   }
 
   addFood(newFood: Food) {
-    try {
-      return this.foodRepo.create(newFood);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.create(newFood);
   }
 
   async updateFood(id: string, food: Food) {
-    try {
-      const FoodData = await this.foodRepo.findById(id);
-      if (FoodData == null) return null;
+    const FoodData = await this.foodRepo.findById(id);
+    if (FoodData == null) return null;
 
-      return this.foodRepo.findByIdAndUpdate(id, food);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.findByIdAndUpdate(id, food);
   }
 
   deleteFood(id: string) {
-    try {
-      return this.foodRepo.findByIdAndRemove(id);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.findByIdAndRemove(id);
   }
 
   updateFoodOrder(newOrderCount: number, foodId: string) {
-    try {
-      return this.foodRepo.findByIdAndUpdate(foodId, {
-        orderCount: newOrderCount,
-      });
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.findByIdAndUpdate(foodId, {
+      orderCount: newOrderCount,
+    });
   }
 
   updateFoodRate(foodWithNewRate: EditFoodRatingDto, foodId: string) {
-    try {
-      return this.foodRepo.findByIdAndUpdate(foodId, foodWithNewRate);
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    return this.foodRepo.findByIdAndUpdate(foodId, foodWithNewRate);
+  }
+
+  sendError(e: any) {
+    this.client.instance().captureException(e);
   }
 }

@@ -48,8 +48,12 @@ export class UserController {
 
   @Get('get-all')
   async getAllUser(@Res() res: Response) {
-    const user = await this.userService.getAll();
-    return res.status(200).json(user);
+    try {
+      const user = await this.userService.getAll();
+      return res.status(200).json(user);
+    } catch (error) {
+      this.userService.sendError(error);
+    }
   }
 
   @Post()
@@ -80,15 +84,19 @@ export class UserController {
     @Res() res: Response,
     @Req() req: Request,
   ) {
-    const isEmailExist = await this.userService.checkEmail(user.email);
-    if (isEmailExist != null)
-      throw new HttpException('Email already have been used', 400);
-    if (file != null) {
-      user.photoPath = `/images/${file.filename}`;
+    try {
+      const isEmailExist = await this.userService.checkEmail(user.email);
+      if (isEmailExist != null)
+        throw new HttpException('Email already have been used', 400);
+      if (file != null) {
+        user.photoPath = `/images/${file.filename}`;
+      }
+      await this.userService.register(user);
+      req.flash('success', 'New User Successfully Added');
+      res.redirect('/user');
+    } catch (error) {
+      this.userService.sendError(error);
     }
-    await this.userService.register(user);
-    req.flash('success', 'New User Successfully Added');
-    res.redirect('/user');
   }
 
   @Get('add')
@@ -108,15 +116,19 @@ export class UserController {
   @Render('users/edit_user')
   @UseFilters(new HttpExceptionFilter('/user'))
   async getEditUserPage(@Req() req: Request, @Param() userParam: UserParamDto) {
-    const userRoles = Object.values(Role);
-    const user = await this.userService.checkId(userParam.id);
-    if (user === null) throw new HttpException('User not found', 404);
-    return {
-      layout: 'templates/main_layout',
-      title: 'Edit User',
-      user,
-      userRoles,
-    };
+    try {
+      const userRoles = Object.values(Role);
+      const user = await this.userService.checkId(userParam.id);
+      if (user === null) throw new HttpException('User not found', 404);
+      return {
+        layout: 'templates/main_layout',
+        title: 'Edit User',
+        user,
+        userRoles,
+      };
+    } catch (error) {
+      this.userService.sendError(error);
+    }
   }
 
   @Delete(':id')
@@ -125,12 +137,16 @@ export class UserController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const user = await this.userService.checkId(userParam.id);
-    if (user.photoPath !== '/images/null.png') {
-      fs.unlinkSync(`./public${user.photoPath}`);
+    try {
+      const user = await this.userService.checkId(userParam.id);
+      if (user.photoPath !== '/images/null.png') {
+        fs.unlinkSync(`./public${user.photoPath}`);
+      }
+      await this.userService.deleteById(userParam.id);
+      req.flash('success', 'User has been deleted successfully');
+      res.redirect('/user');
+    } catch (error) {
+      this.userService.sendError(error);
     }
-    await this.userService.deleteById(userParam.id);
-    req.flash('success', 'User has been deleted successfully');
-    res.redirect('/user');
   }
 }

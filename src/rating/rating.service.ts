@@ -15,25 +15,21 @@ export class RatingService {
   ) {}
 
   async checkRating(body: CreateRatingDto, userId: string) {
-    try {
-      const isAlreadyRated = await this.ratingRepo.find({
-        food: body.food,
-        user: userId,
-      });
-      if (isAlreadyRated.length === 0) return false;
-      return true;
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    const isAlreadyRated = await this.ratingRepo.find({
+      food: body.food,
+      user: userId,
+    });
+    if (isAlreadyRated.length === 0) return false;
+    return true;
   }
 
   async addRate(body: SaveRatingDto, userId: string) {
-    try {
-      body.user = userId;
-      await this.ratingRepo.create(body);
-      return 'Thank you for your feedback';
-    } catch (error) {
-      this.client.instance().captureException(error);
-    }
+    body.user = userId;
+    await this.ratingRepo.create(body);
+    return 'Thank you for your feedback';
+  }
+
+  sendError(e: any) {
+    this.client.instance().captureException(e);
   }
 }
