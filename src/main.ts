@@ -62,6 +62,7 @@ async function bootstrap() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  await app.listen(process.env.PORT || 3000);
+  const server = await app.listen(process.env.PORT || 3000);
+  server.setTimeout(60000 * 2);
 }
 bootstrap();
