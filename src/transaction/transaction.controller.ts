@@ -298,7 +298,6 @@ export class TransactionController {
         this.transactionService.getOrderById(orderParam.id, true),
         this.transactionService.getTransactionByOrderId(orderParam.id),
       ]);
-      //todo: update food ordercount per transaction
       if (data[0] === null || data[1].length === 0)
         throw new HttpException('Order/transactions not found', 404);
       await Promise.all([
