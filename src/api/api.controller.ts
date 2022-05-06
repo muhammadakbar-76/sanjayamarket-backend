@@ -209,7 +209,6 @@ export class ApiController {
           return food;
         }),
       );
-      //TODO : add food orderCount
       const order = await this.transactionService.addOrder([]);
       const transactions = await Promise.all(
         foodsList.map((fl, i) => {
@@ -304,7 +303,6 @@ export class ApiController {
           "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
           400,
         );
-      //TODO : if user cancel, decrease food orderCount
       const result = await Promise.all([
         this.foodService.updateFoodOrder(
           data[1].orderCount - data[0].food.quantity,

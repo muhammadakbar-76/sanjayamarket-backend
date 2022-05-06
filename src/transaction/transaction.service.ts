@@ -55,6 +55,10 @@ export class TransactionService {
     });
   }
 
+  getTransactionByOrderId(id: string) {
+    return this.transactionRepo.find({ orderId: id });
+  }
+
   getTransaction(body: EditTransactionParamDto, id: string) {
     return this.transactionRepo.findOne({
       _id: body.transactionId,
@@ -89,7 +93,8 @@ export class TransactionService {
     return this.orderRepo.create({ transactions });
   }
 
-  getOrderById(id: string) {
+  getOrderById(id: string, isForDeleting = false) {
+    if (isForDeleting) return this.orderRepo.findById(id);
     return this.orderRepo
       .findById(id)
       .populate({ path: 'transactions', populate: 'user' });

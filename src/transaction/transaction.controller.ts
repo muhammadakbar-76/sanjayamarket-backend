@@ -118,6 +118,21 @@ export class TransactionController {
             : {}),
         }),
         this.transactionService.getOrderById(data[0].orderId),
+        ...(body.status === Status.Cancel
+          ? [
+              this.foodService.updateFoodOrder(
+                data[1].orderCount - body.quantity,
+                body.food,
+              ),
+            ]
+          : data[0].food.quantity !== body.quantity
+          ? [
+              this.foodService.updateFoodOrder(
+                data[1].orderCount - data[0].food.quantity + body.quantity,
+                body.food,
+              ),
+            ]
+          : []),
       ]);
       const isOnProgress = result[1].transactions.filter(
         (transaction) =>
@@ -241,13 +256,29 @@ export class TransactionController {
     @Res() res: Response,
   ) {
     try {
-      //todo: delete transactions inside order as well
       const transaction = await this.transactionService.getTransactionById(
         transactionParam.id,
       );
       if (transaction === null)
         throw new HttpException('Transaction not found', 404);
-      await this.transactionService.deleteById(transactionParam.id);
+      const data = await Promise.all([
+        this.transactionService.getOrderById(transaction.orderId, true),
+        this.foodService.getById(transaction.food._id),
+      ]);
+      const newTransactionList = data[0].transactions.filter(
+        (trans) => trans.toString() !== transaction.id,
+      );
+      const result = await Promise.all([
+        this.transactionService.updateOrder(data[0].id, newTransactionList),
+        this.transactionService.deleteById(transactionParam.id),
+        this.foodService.updateFoodOrder(
+          data[1].orderCount - transaction.food.quantity,
+          data[1].id,
+        ),
+      ]);
+      if (result[0].transactions.length === 1) {
+        await this.transactionService.deleteOrderById(data[0].id);
+      }
       req.flash('success', 'Transaction deleted successfully');
       return res.redirect('/transaction');
     } catch (error) {
@@ -263,10 +294,35 @@ export class TransactionController {
     @Res() res: Response,
   ) {
     try {
-      //todo: delete transactions as well
-      const order = await this.transactionService.getOrderById(orderParam.id);
-      if (order === null) throw new HttpException('Order not found', 404);
-      await this.transactionService.deleteOrderById(orderParam.id);
+      const data = await Promise.all([
+        this.transactionService.getOrderById(orderParam.id, true),
+        this.transactionService.getTransactionByOrderId(orderParam.id),
+      ]);
+      //todo: update food ordercount per transaction
+      if (data[0] === null || data[1].length === 0)
+        throw new HttpException('Order/transactions not found', 404);
+      await Promise.all([
+        ...data[0].transactions.map((id) => {
+          const res = this.transactionService.deleteById(id.toString());
+          return res;
+        }),
+        this.transactionService.deleteOrderById(orderParam.id),
+      ]);
+      const foods = await Promise.all(
+        data[1].map((val) => {
+          const food = this.foodService.getById(val.food._id);
+          return food;
+        }),
+      );
+      await Promise.all(
+        foods.map((food, i) => {
+          const del = this.foodService.updateFoodOrder(
+            food.orderCount - data[1][i].food.quantity,
+            food.id,
+          );
+          return del;
+        }),
+      );
       req.flash('success', 'Order deleted successfully');
       return res.redirect('/transaction/orders');
     } catch (error) {
