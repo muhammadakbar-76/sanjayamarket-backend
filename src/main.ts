@@ -10,7 +10,6 @@ import * as session from 'express-session';
 import * as methodOverride from 'method-override';
 import * as passport from 'passport';
 import * as crypto from 'crypto';
-import * as timeout from 'connect-timeout';
 import { NextFunction, Request, Response } from 'express';
 import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
 
@@ -19,7 +18,6 @@ const flash = require('connect-flash');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.use(timeout('120s'));
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new TimeoutInterceptor());
   app.use((req: Request, res: Response, next: NextFunction) => {
