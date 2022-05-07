@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -12,10 +13,9 @@ import * as passport from 'passport';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
-import MongoStore from 'connect-mongo';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const flash = require('connect-flash');
+const MongoStore = require('connect-mongo');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -52,6 +52,9 @@ async function bootstrap() {
       secret: process.env.SESSION_KEY, //express session by default store in memory so it will cause memory leaks, so for best practice in production see the documentation
       resave: false,
       saveUninitialized: false,
+      cookie: {
+        maxAge: 60000 * 60 * 24,
+      },
       store: MongoStore.create({
         mongoUrl: process.env.MONGO_URI,
         touchAfter: 24 * 60 * 60,
