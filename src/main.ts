@@ -12,6 +12,7 @@ import * as passport from 'passport';
 import * as crypto from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
+import MongoStore from 'connect-mongo';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const flash = require('connect-flash');
@@ -51,7 +52,13 @@ async function bootstrap() {
       secret: process.env.SESSION_KEY, //express session by default store in memory so it will cause memory leaks, so for best practice in production see the documentation
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 3600000 }, // you should learn redis
+      store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+        touchAfter: 24 * 60 * 60,
+        crypto: {
+          secret: process.env.MONGO_CONNECT_SECRET,
+        },
+      }),
     }),
   );
   app.use(flash());
