@@ -61,27 +61,27 @@
                                             </button>
                                             <ul class="dropdown-menu" aria-labelledby="<%= `dropdown-${i}` %>">
                                               <li>
-                                                  <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Belum_Bayar" id="bayar-<%= el.id %>" method="post">
+                                                  <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Belum_Bayar&_csrf=<%= csrfToken %>" id="bayar-<%= el.id %>" method="post">
                                                     <button type="submit" class="dropdown-item change-status" data-id="bayar-<%= el.id %>">Belum Bayar</button>
                                                 </form>
                                               </li> 
                                               <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Cooking" id="cooking-<%= el.id %>" method="post">
+                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Cooking&_csrf=<%= csrfToken %>" id="cooking-<%= el.id %>" method="post">
                                                   <button type="submit" class="dropdown-item change-status" data-id="cooking-<%= el.id %>">Cooking</button>
                                               </form>
                                             </li>
                                             <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Delivering" id="deliver-<%= el.id %>" method="post">
+                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Delivering&_csrf=<%= csrfToken %>" id="deliver-<%= el.id %>" method="post">
                                                   <button type="submit" class="dropdown-item change-status" data-id="deliver-<%= el.id %>">Delivering</button>
                                               </form>
                                             </li>
                                             <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Canceled" id="cancel-<%= el.id %>" method="post">
+                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Canceled&_csrf=<%= csrfToken %>" id="cancel-<%= el.id %>" method="post">
                                                   <button type="submit" class="dropdown-item change-status" data-id="cancel-<%= el.id %>">Cancel</button>
                                               </form>
                                             </li>
                                             <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Finished" id="finish-<%= el.id %>" method="post">
+                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Finished&_csrf=<%= csrfToken %>" id="finish-<%= el.id %>" method="post">
                                                   <button type="submit" class="dropdown-item change-status" data-id="finish-<%= el.id %>">Finish</button>
                                               </form>
                                             </li> 

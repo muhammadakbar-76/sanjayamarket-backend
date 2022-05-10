@@ -1,5 +1,5 @@
 <div class="container">
-    <form action="/transaction/<%= transaction._id %>?_method=PUT" method="post" class="p-4 rounded border border-warning">
+    <form action="/transaction/<%= transaction._id %>?_method=PUT&_csrf=<%= csrfToken %>" method="post" class="p-4 rounded border border-warning">
         <h3>Edit Transaction</h3>
         <div class="row">
             <div class="col-6">

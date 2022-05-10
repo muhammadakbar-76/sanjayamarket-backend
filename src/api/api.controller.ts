@@ -219,15 +219,16 @@ export class ApiController {
           ` - ${fl.name} sebanyak ${body.quantity[i]} dengan transactionId: ${transactions[i].id}\n`,
       )
       .join('\n');
+    //this one experimental
+    this.apiService.sendMessage(
+      payload.email,
+      payload.id,
+      message,
+      total,
+      order.id,
+    );
     await Promise.all([
       this.transactionService.updateOrder(order.id, listOfTransactionsId),
-      this.apiService.sendMessage(
-        payload.email,
-        payload.id,
-        message,
-        total,
-        order.id,
-      ),
       ...foodsList.map((el, i) => {
         const updateFood = this.foodService.updateFoodOrder(
           el.orderCount + body.quantity[i],
@@ -340,13 +341,20 @@ export class ApiController {
     @Res() res: Response,
   ) {
     const payload = req.user as payloadJWT;
-    const user = await this.userService.checkId(payload.id);
-    if (user == null)
+    const user = await Promise.all([
+      this.userService.checkId(payload.id),
+      this.userService.checkEmail(body.email),
+    ]);
+    if (user[0].email !== user[1].email)
+      if (user[1].email !== null)
+        throw new HttpException('Email already been registered', 400);
+    if (user[0] == null || user[0].role !== 'user')
       throw new HttpException('User Not Existed or Old Password Wrong', 400);
     if (body.oldPassword !== null) {
-      if (!bcrypt.compareSync(body.oldPassword, user.password))
+      if (!bcrypt.compareSync(body.oldPassword, user[0].password))
         throw new HttpException('User Not Existed or Old Password Wrong', 400);
     }
+
     await this.userService.editUser(payload.id, body);
     return res.status(200).json('Your profile updated successfully');
   }

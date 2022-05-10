@@ -11,14 +11,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private url: string) {}
 
   catch(exception: HttpException, host: ArgumentsHost) {
-    console.log('its catched');
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
     let response;
     const status = exception.getStatus();
-    if (status === 404) {
+    if (typeof exception.getResponse() === 'string') {
       response = {
+        statusCode: status,
         message: [exception.getResponse()],
       };
     } else {
@@ -28,7 +28,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
     }
     req.flash('message', response.message);
-    console.log('it here in exception');
     res.redirect(this.url);
   }
 }

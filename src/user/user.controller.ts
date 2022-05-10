@@ -79,19 +79,25 @@ export class UserController {
     @Body() body: EditUserDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const user = await this.userService.checkId(userParam.id);
-    if (
-      user == null ||
-      !bcrypt.compareSync(body.oldPassword, user.password) ||
-      user.role !== 'Admin'
-    )
-      throw new HttpException(
-        "User doesn't exist | Password wrong | You don't have previlege",
-        404,
+    const user = await Promise.all([
+      this.userService.checkId(userParam.id),
+      this.userService.checkEmail(body.email),
+    ]);
+    if (user[0] == null) throw new HttpException("User doesn't exist", 404);
+    if (body.oldPassword.length > 0) {
+      const isAuthenticated = bcrypt.compareSync(
+        body.oldPassword,
+        user[0].password,
       );
+      if (!isAuthenticated) throw new HttpException('Password is wrong', 400);
+    }
+    if (user[0].email !== user[1].email)
+      if (user[1] != null) throw new HttpException('Email already exist', 400);
+    if (user[0].role != 'Admin')
+      throw new HttpException("You don't have previlege", 400);
     if (file != null) {
       body.photoPath = `/images/${file.filename}`;
-      fs.unlinkSync(`./public${user.photoPath}`);
+      fs.unlinkSync(`./public${user[0].photoPath}`);
     }
     await this.userService.editUser(userParam.id, body);
     req.flash('success', 'User Successfully Edited');
@@ -134,7 +140,6 @@ export class UserController {
   ) {
     const isEmailExist = await this.userService.checkEmail(user.email);
     if (isEmailExist != null) {
-      console.log('yes email exist');
       throw new HttpException('Email already have been used', 400);
     }
     if (file != null) user.photoPath = `/images/${file.filename}`;

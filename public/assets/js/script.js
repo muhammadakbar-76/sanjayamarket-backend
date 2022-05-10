@@ -32,7 +32,7 @@ $(document).ready(function () {
           return `<td class="align-middle">
           <div class="d-flex justify-content-end">
           <a href="/transaction/order/detail/${data}" class="font-weight-bold text-xs btn bg-gradient-secondary me-2">Details</a>
-            <form action="/transaction/order/${data}?_method=DELETE" method="post" id="${data}">
+            <form action="/transaction/order/${data}?_method=DELETE&_csrf=${csrfToken}" method="post" id="${data}">
              <button type="submit" class="font-weight-bold text-xs btn bg-gradient-danger delete-order-btn" data-id="${data}">Delete</button>
              </form>
              </div>
@@ -246,7 +246,7 @@ $(document).ready(function () {
           <div class="d-flex">
             <a href="/transaction/edit/${data}" class="font-weight-bold text-xs btn bg-gradient-primary mt-3 me-2">Edit</a>
             <a href="/transaction/detail/${data}" class="font-weight-bold text-xs btn bg-gradient-secondary mt-3 me-2">Details</a>
-            <form action="/transaction/${data}?_method=DELETE" method="post" id="${data}">
+            <form action="/transaction/${data}?_method=DELETE&_csrf=${csrfToken}" method="post" id="${data}">
              <button type="submit" class="font-weight-bold text-xs btn bg-gradient-danger delete-transaction-btn mt-3" data-id="${data}">Delete</button>
              </form>
              </div>

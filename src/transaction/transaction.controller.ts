@@ -172,7 +172,7 @@ export class TransactionController {
 
   @Get('orders')
   @Render('transaction/orders')
-  async showOrdersPage(@Req() req: Request) {
+  async showOrdersPage(@Req() req: Request & any) {
     const message = req.flash('message');
     const success = req.flash('success');
     return {
@@ -180,6 +180,7 @@ export class TransactionController {
       title: 'Orders',
       message,
       success,
+      csrfToken: req.csrfToken(),
     };
   }
 
@@ -192,7 +193,7 @@ export class TransactionController {
   @Get('orders-on-progress')
   @UseFilters(new HttpExceptionFilter('transaction/orders-on-progress'))
   @Render('transaction/orders_on_progress')
-  async showOnProgressOrderPage(@Req() req: Request) {
+  async showOnProgressOrderPage(@Req() req: Request & any) {
     const message = req.flash('message');
     const success = req.flash('success');
     const data = await Promise.all([
@@ -219,6 +220,7 @@ export class TransactionController {
       success,
       orders: data[0],
       payments,
+      csrfToken: req.csrfToken(),
     };
   }
 
@@ -327,6 +329,6 @@ export class TransactionController {
         false,
       );
     req.flash('success', 'Status changed successfully');
-    return res.redirect('/transaction/orders');
+    return res.redirect('/transaction/orders-on-progress');
   }
 }
