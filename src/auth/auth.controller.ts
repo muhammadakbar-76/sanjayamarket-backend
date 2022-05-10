@@ -28,13 +28,14 @@ export class AuthController {
 
   @Get('login')
   @Render('login_page')
-  loginPage(@Req() req: Request) {
+  loginPage(@Req() req: Request & any) {
     const message = req.flash('message');
     if (message.length > 0) message.push('Wrong Credentials');
     return {
       title: 'Login',
       layout: 'templates/blank_layout',
       message,
+      csrfToken: req.csrfToken(),
     };
   }
 }

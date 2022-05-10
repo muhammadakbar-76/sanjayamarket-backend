@@ -11,6 +11,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private url: string) {}
 
   catch(exception: HttpException, host: ArgumentsHost) {
+    console.log('its catched');
     const ctx = host.switchToHttp();
     const res = ctx.getResponse<Response>();
     const req = ctx.getRequest<Request>();
@@ -27,6 +28,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
     }
     req.flash('message', response.message);
+    console.log('it here in exception');
     res.redirect(this.url);
   }
 }

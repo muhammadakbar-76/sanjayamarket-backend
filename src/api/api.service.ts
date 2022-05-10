@@ -17,18 +17,19 @@ export class ApiService {
     total: number,
     orderId: string,
   ) {
-    return lastValueFrom(
-      this.httpService.post(
-        `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_KEY}/sendMessage`,
-        {
-          chat_id: process.env.CHAT_ID_TELEGRAM,
-          text: `Order ID: ${orderId}\n\nUser ${id} dengan email ${email} telah memesan :\n\n${message}\n\nTotal Tagihan : ${total}`,
-        },
-      ),
-    );
-  }
-
-  sendError(e: any) {
-    this.client.instance().captureException(e);
+    try {
+      return lastValueFrom(
+        this.httpService.post(
+          `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_KEY}/sendMessage`,
+          {
+            chat_id: process.env.CHAT_ID_TELEGRAM,
+            text: `Order ID: ${orderId}\n\nUser ${id} dengan email ${email} telah memesan :\n\n${message}\n\nTotal Tagihan : ${total}`,
+          },
+        ),
+      );
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 }

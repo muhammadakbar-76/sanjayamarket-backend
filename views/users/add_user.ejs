@@ -1,5 +1,5 @@
 <div class="container">
-    <form action="/user" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
+    <form action="/user/add?_csrf=<%= csrfToken %>" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
         <h3>Add User</h3>
         <% if (message.length > 0) { %>
             <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">

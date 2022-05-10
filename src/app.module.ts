@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { UserModule } from './user/user.module';
 import { TransactionModule } from './transaction/transaction.module';
@@ -10,6 +10,11 @@ import { RatingModule } from './rating/rating.module';
 import { SentryModule } from '@ntegral/nestjs-sentry';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module';
+import { FoodController } from './food/food.controller';
+import * as csurf from 'csurf';
+import { UserController } from './user/user.controller';
+import { AuthController } from './auth/auth.controller';
+import { TransactionController } from './transaction/transaction.controller';
 
 @Module({
   imports: [
@@ -35,4 +40,15 @@ import { AuthModule } from './auth/auth.module';
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(csurf({ cookie: true }))
+      .forRoutes(
+        FoodController,
+        UserController,
+        AuthController,
+        TransactionController,
+      );
+  }
+}

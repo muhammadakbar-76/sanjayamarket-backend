@@ -13,43 +13,79 @@ export class FoodService {
   ) {}
 
   getAll() {
-    return this.foodRepo.find();
+    try {
+      return this.foodRepo.find();
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   getAllForTransaction() {
-    return this.foodRepo.find().select('id name price');
+    try {
+      return this.foodRepo.find().select('id name price');
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   getById(id: string) {
-    return this.foodRepo.findById(id);
+    try {
+      return this.foodRepo.findById(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   addFood(newFood: Food) {
-    return this.foodRepo.create(newFood);
+    try {
+      return this.foodRepo.create(newFood);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   async updateFood(id: string, food: Food) {
-    const FoodData = await this.foodRepo.findById(id);
-    if (FoodData == null) return null;
+    try {
+      const FoodData = await this.foodRepo.findById(id);
+      if (FoodData == null) return null;
 
-    return this.foodRepo.findByIdAndUpdate(id, food);
+      return this.foodRepo.findByIdAndUpdate(id, food);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   deleteFood(id: string) {
-    return this.foodRepo.findByIdAndRemove(id);
+    try {
+      return this.foodRepo.findByIdAndRemove(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   updateFoodOrder(newOrderCount: number, foodId: string) {
-    return this.foodRepo.findByIdAndUpdate(foodId, {
-      orderCount: newOrderCount,
-    });
+    try {
+      return this.foodRepo.findByIdAndUpdate(foodId, {
+        orderCount: newOrderCount,
+      });
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   updateFoodRate(foodWithNewRate: EditFoodRatingDto, foodId: string) {
-    return this.foodRepo.findByIdAndUpdate(foodId, foodWithNewRate);
-  }
-
-  sendError(e: any) {
-    this.client.instance().captureException(e);
+    try {
+      return this.foodRepo.findByIdAndUpdate(foodId, foodWithNewRate);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 }

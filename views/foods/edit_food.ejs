@@ -1,6 +1,6 @@
 <div class="container">
-  <form action="/food/edit/<%= food._id %>?_method=PUT" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
-      <h3>Edit Food</h3>
+  <form action="/food/edit/<%= food._id %>?_method=PUT&_csrf=<%= csrfToken %>" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
+    <h3>Edit Food</h3>
       <div class="row">
           <div class="col-6">
               <div class="mb-3">

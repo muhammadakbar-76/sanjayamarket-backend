@@ -59,7 +59,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">x</button>
                           </div>
                     <% } %>
-                  <form role="form" action="/auth/login" method="post">
+                  <form role="form" action="/auth/login?_csrf=<%= csrfToken %>" method="post">
                     <label>Email</label>
                     <div class="mb-3">
                       <input type="email" class="form-control" name="username" placeholder="Email" aria-label="Email" aria-describedby="email-addon">

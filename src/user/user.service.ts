@@ -20,53 +20,99 @@ export class UserService {
   ) {}
 
   getAll() {
-    return this.userRepo.find();
+    try {
+      return this.userRepo.find();
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   getAllForTransaction() {
-    return this.userRepo.find({ role: 'user' }).select('id email');
+    try {
+      return this.userRepo.find({ role: 'user' }).select('id email');
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   deleteById(id: string) {
-    return this.userRepo.findByIdAndDelete(id);
+    try {
+      return this.userRepo.findByIdAndDelete(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   register(user: SaveUserDto) {
-    return this.userRepo.create(user);
+    try {
+      return this.userRepo.create(user);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   checkEmail(email: string) {
-    return this.userRepo.findOne({ email });
+    try {
+      return this.userRepo.findOne({ email });
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   login(credential: LoginDto) {
-    return this.userRepo.findOne({ email: credential.email });
+    try {
+      return this.userRepo.findOne({ email: credential.email });
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   checkId(id: string) {
-    return this.userRepo.findById(id);
+    try {
+      return this.userRepo.findById(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   editUser(id: string, user: SaveUserDto) {
-    return this.userRepo.updateOne({ _id: id }, user);
+    try {
+      return this.userRepo.updateOne({ _id: id }, user);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   //* Refresh Token Services
   createRefreshToken(userId: string, ttl: number) {
-    const expiration = new Date();
-    expiration.setTime(expiration.getTime() + ttl);
-    return this.refreshRepo.create({
-      user: userId,
-      is_revoked: false,
-      expires: expiration,
-    });
+    try {
+      const expiration = new Date();
+      expiration.setTime(expiration.getTime() + ttl);
+      return this.refreshRepo.create({
+        user: userId,
+        is_revoked: false,
+        expires: expiration,
+      });
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 
   findTokenById(id: string) {
-    return this.refreshRepo.findById(id);
-  }
-
-  sendError(e: any) {
-    this.client.instance().captureException(e);
+    try {
+      return this.refreshRepo.findById(id);
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
   }
 }

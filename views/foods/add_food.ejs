@@ -1,6 +1,6 @@
 <div class="container">
-    <form action="/food/add" method="post" class="p-4 rounded border border-warning" enctype="multipart/form-data">
-        <h3>Add Food</h3>
+    <form action="/food/add?_csrf=<%= csrfToken %>" method="post" id="add-food-form" class="p-4 rounded border border-warning" enctype="multipart/form-data">
+      <h3>Add Food</h3>
         <% if (message.length > 0) { %>
             <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">
                 <strong>Oops! Something went Wrong</strong>
@@ -48,7 +48,7 @@
                       </div>
                 </div>
                 </div>
-                <button type="submit" class="btn btn-primary me-1">Submit</button>
+                <button type="submit" id="add-food-btn" class="btn btn-primary me-1">Submit</button>
                 <a href="/food" class="btn btn-secondary">Back</a>
     </form>
   </div>

@@ -1,4 +1,5 @@
 <div class="container">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <div class="d-flex justify-content-between">
     <% if (message.length > 0) { %>
       <div class="alert alert-danger alert-dismissible fade show text-white" role="alert">

@@ -36,7 +36,7 @@ export class FoodController {
   constructor(private readonly foodService: FoodService) {}
 
   @Get()
-  async showPageFood(@Req() req: Request, @Res() res: Response) {
+  async showPageFood(@Req() req: Request & any, @Res() res: Response) {
     const message = req.flash('message');
     const success = req.flash('success');
     res.render('foods/index', {
@@ -44,44 +44,38 @@ export class FoodController {
       layout: 'templates/main_layout',
       message,
       success,
+      csrfToken: req.csrfToken(),
     });
   }
 
   @Get('get-all')
   async getAllFood(@Res() res: Response) {
-    try {
-      const foods = await this.foodService.getAll();
-      return res.status(200).json(foods);
-    } catch (error) {
-      this.foodService.sendError(error);
-    }
+    const foods = await this.foodService.getAll();
+    return res.status(200).json(foods);
   }
 
   @Get('edit/:id')
   @UseFilters(new HttpExceptionFilter('/food'))
   async editFoodPage(
-    @Req() req: Request,
+    @Req() req: Request & any,
     @Param() foodParam: FoodParams,
     @Res() res: Response,
   ) {
-    try {
-      const food = await this.foodService.getById(foodParam.id);
-      if (!food) throw new HttpException("Food doesn't Exist", 404);
-      const foodTypes = Object.values(FoodType);
-      res.render('foods/edit_food', {
-        title: 'Foods',
-        layout: 'templates/main_layout',
-        food,
-        foodTypes,
-      });
-    } catch (error) {
-      this.foodService.sendError(error);
-    }
+    const food = await this.foodService.getById(foodParam.id);
+    if (!food) throw new HttpException("Food doesn't Exist", 404);
+    const foodTypes = Object.values(FoodType);
+    res.render('foods/edit_food', {
+      title: 'Foods',
+      layout: 'templates/main_layout',
+      food,
+      foodTypes,
+      csrfToken: req.csrfToken(),
+    });
   }
 
   @Get('add')
   @Render('foods/add_food')
-  addFoodPage(@Req() req: Request) {
+  addFoodPage(@Req() req: Request & any) {
     const message = req.flash('message');
     const foodTypes = Object.values(FoodType);
     return {
@@ -89,6 +83,7 @@ export class FoodController {
       layout: 'templates/main_layout',
       message,
       foodTypes,
+      csrfToken: req.csrfToken(),
     };
   }
 
@@ -118,31 +113,24 @@ export class FoodController {
     @Body() food: CreateFoodDto,
     @UploadedFile() file: Express.Multer.File,
     @Res() res: Response,
-    @Req() req: Request,
+    @Req() req: Request & any,
   ) {
-    try {
-      const removedSpacesIngredients = food.ingredients.replace(
-        /\s*,\s*/g,
-        ',',
-      );
-      const ingredientsArray = removedSpacesIngredients.split(',');
-      const newFood = new Food();
-      if (file != null) {
-        newFood.picturePath = `/images/${file.filename}`;
-      }
-      Object.keys(FoodType).forEach((e) => {
-        if (FoodType[e] === food.types) newFood.types = FoodType[e];
-      });
-      newFood.name = food.name;
-      newFood.description = food.description;
-      newFood.ingredients = ingredientsArray;
-      newFood.price = food.price;
-      await this.foodService.addFood(newFood);
-      req.flash('success', 'New Food Successfully Added');
-      res.redirect('/food');
-    } catch (error) {
-      this.foodService.sendError(error);
+    const removedSpacesIngredients = food.ingredients.replace(/\s*,\s*/g, ',');
+    const ingredientsArray = removedSpacesIngredients.split(',');
+    const newFood = new Food();
+    if (file != null) {
+      newFood.picturePath = `/images/${file.filename}`;
     }
+    Object.keys(FoodType).forEach((e) => {
+      if (FoodType[e] === food.types) newFood.types = FoodType[e];
+    });
+    newFood.name = food.name;
+    newFood.description = food.description;
+    newFood.ingredients = ingredientsArray;
+    newFood.price = food.price;
+    await this.foodService.addFood(newFood);
+    req.flash('success', 'New Food Successfully Added');
+    res.redirect('/food');
   }
 
   @Put('edit/:id')
@@ -174,34 +162,27 @@ export class FoodController {
     @Body() body: EditFoodDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    try {
-      const food = await this.foodService.getById(foodParam.id);
-      if (food == null) throw new HttpException("Food doesn't exist", 404);
-      const removedSpacesIngredients = body.ingredients.replace(
-        /\s*,\s*/g,
-        ',',
-      );
-      const ingredientsArray = removedSpacesIngredients.split(',');
-      const editedFood = new Food();
-      if (file != null) {
-        editedFood.picturePath = `/images/${file.filename}`;
-        if (food.picturePath !== '/images/null.png') {
-          fs.unlinkSync(`./public${food.picturePath}`);
-        }
+    const food = await this.foodService.getById(foodParam.id);
+    if (food == null) throw new HttpException("Food doesn't exist", 404);
+    const removedSpacesIngredients = body.ingredients.replace(/\s*,\s*/g, ',');
+    const ingredientsArray = removedSpacesIngredients.split(',');
+    const editedFood = new Food();
+    if (file != null) {
+      editedFood.picturePath = `/images/${file.filename}`;
+      if (food.picturePath !== '/images/null.png') {
+        fs.unlinkSync(`./public${food.picturePath}`);
       }
-      Object.keys(FoodType).forEach((e) => {
-        if (FoodType[e] === body.types) editedFood.types = FoodType[e];
-      });
-      editedFood.name = body.name;
-      editedFood.description = body.description;
-      editedFood.ingredients = ingredientsArray;
-      editedFood.price = body.price;
-      await this.foodService.updateFood(foodParam.id, editedFood);
-      req.flash('success', 'Food Successfully Edited');
-      res.redirect('/food');
-    } catch (error) {
-      this.foodService.sendError(error);
     }
+    Object.keys(FoodType).forEach((e) => {
+      if (FoodType[e] === body.types) editedFood.types = FoodType[e];
+    });
+    editedFood.name = body.name;
+    editedFood.description = body.description;
+    editedFood.ingredients = ingredientsArray;
+    editedFood.price = body.price;
+    await this.foodService.updateFood(foodParam.id, editedFood);
+    req.flash('success', 'Food Successfully Edited');
+    res.redirect('/food');
   }
 
   @Delete(':id')
@@ -211,14 +192,10 @@ export class FoodController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    try {
-      const food = await this.foodService.getById(foodParam.id);
-      if (food == null) throw new HttpException('Food not found', 404);
-      await this.foodService.deleteFood(foodParam.id);
-      req.flash('success', 'Food deleted successfully');
-      res.redirect('/food');
-    } catch (error) {
-      this.foodService.sendError(error);
-    }
+    const food = await this.foodService.getById(foodParam.id);
+    if (food == null) throw new HttpException('Food not found', 404);
+    await this.foodService.deleteFood(foodParam.id);
+    req.flash('success', 'Food deleted successfully');
+    res.redirect('/food');
   }
 }

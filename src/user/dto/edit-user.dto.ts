@@ -14,7 +14,7 @@ export class EditUserDto extends PartialType(CreateUserDto) {
   readonly oldPassword?: string;
 
   @IsString()
-  readonly adress?: string;
+  readonly address?: string;
 
   @IsPhoneNumber('ID')
   readonly phoneNumber?: string;
@@ -25,7 +25,7 @@ export class EditUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsFile()
   @MaxFileSize(1000000)
-  readonly photoPath?: string;
+  photoPath?: string;
 
   @IsNumber()
   readonly houseNumber?: number;
