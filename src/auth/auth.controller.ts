@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Request, Response } from 'express';
-import { HttpExceptionFilter } from '../filters/http-exception.filter';
+import { HttpExceptionFilter } from '../utilities/filters/http-exception.filter';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
 

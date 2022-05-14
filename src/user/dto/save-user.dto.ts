@@ -26,4 +26,7 @@ export class SaveUserDto extends PartialType(CreateUserDto) {
 
   @IsNumber()
   readonly houseNumber?: number;
+
+  @IsString()
+  readonly fcmToken?: string;
 }

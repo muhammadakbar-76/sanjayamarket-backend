@@ -15,7 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { HttpExceptionFilter } from '../filters/http-exception.filter';
+import { HttpExceptionFilter } from '../utilities/filters/http-exception.filter';
 import { AuthenticatedGuard } from '../auth/authenticated.guard';
 import { UserService } from './user.service';
 import { Request, Response } from 'express';

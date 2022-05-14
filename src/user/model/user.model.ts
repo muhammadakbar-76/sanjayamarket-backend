@@ -43,6 +43,9 @@ export class User {
 
   @Prop()
   houseNumber: number;
+
+  @Prop({ default: '' })
+  fcmToken: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

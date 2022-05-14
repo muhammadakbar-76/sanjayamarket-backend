@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { UserService } from '../user/user.service';
-import { HttpExceptionFilter } from '../filters/http-exception.filter';
+import { HttpExceptionFilter } from '../utilities/filters/http-exception.filter';
 import { OrderParams } from './dto/order-param.dto';
 import { Status } from './model/transaction.model';
 import { TransactionService } from './transaction.service';

@@ -45,4 +45,8 @@ export class CreateUserDto {
   @Type(() => Number)
   @IsNumber()
   readonly houseNumber: number;
+
+  @IsOptional()
+  @IsString()
+  readonly fcmToken: string;
 }

@@ -1,6 +1,6 @@
 import { Controller, Get, Render, UseFilters, UseGuards } from '@nestjs/common';
 import { AuthenticatedGuard } from './auth/authenticated.guard';
-import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { HttpExceptionFilter } from './utilities/filters/http-exception.filter';
 
 @UseGuards(AuthenticatedGuard)
 @UseFilters(new HttpExceptionFilter('/auth/login'))

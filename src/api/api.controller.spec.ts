@@ -126,8 +126,17 @@ describe('ApiController', () => {
   describe('getAllFood', () => {
     it('should return an array of foods', async () => {
       const res = {
-        json: (body?: any) => body,
-        status: (code: number) => code,
+        val: [],
+        statusCode: 0,
+        json: function (body?: any) {
+          this.val = body;
+          return this.val;
+        },
+        status: function (code: number) {
+          this.statusCode = code;
+          if (this.val.length > 0) return this.val;
+          return this;
+        },
       } as any as Response;
       expect(await apiController.getAllFood(res)).toEqual(listOfFoods);
     });

@@ -13,7 +13,7 @@ import * as passport from 'passport';
 import * as crypto from 'crypto';
 import * as cookieParser from 'cookie-parser';
 import { NextFunction, Request, Response } from 'express';
-import { TimeoutInterceptor } from './interceptors/timeout.interceptor';
+import { TimeoutInterceptor } from './utilities/interceptors/timeout.interceptor';
 
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo');

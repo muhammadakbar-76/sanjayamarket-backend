@@ -18,7 +18,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import { diskStorage } from 'multer';
-import { HttpExceptionFilter } from '../filters/http-exception.filter';
+import { HttpExceptionFilter } from '../utilities/filters/http-exception.filter';
 import { FoodParams } from './dto/food-param.dto';
 import { FoodService } from './food.service';
 import { Food, FoodType } from './model/food.model';
