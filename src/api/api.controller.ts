@@ -36,6 +36,7 @@ import * as crypto from 'crypto';
 import { extname } from 'path';
 import { Status } from '../transaction/model/transaction.model';
 import { ApiService } from './api.service';
+import { CheckEmailDto } from '../user/dto/check-email.dto';
 
 export interface AuthenticationPayload {
   user: User;
@@ -398,6 +399,19 @@ export class ApiController {
 
       await this.userService.editUser(payload.id, body);
       return res.status(200).json('Your profile updated successfully');
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('check-email')
+  @Public()
+  async checkEmail(@Body() body: CheckEmailDto, @Res() res: Response) {
+    try {
+      const isEmailExist = await this.userService.checkEmail(body.email);
+      if (isEmailExist !== null)
+        return res.status(200).json({ isEmailExist: true });
+      return res.status(200).json({ isEmailExist: false });
     } catch (error) {
       throw error;
     }
