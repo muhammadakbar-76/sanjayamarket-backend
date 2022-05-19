@@ -1,3 +1,4 @@
+import { MailerService } from '@nestjs-modules/mailer';
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectSentry, SentryService } from '@ntegral/nestjs-sentry';
@@ -8,6 +9,7 @@ export class ApiService {
   constructor(
     @InjectSentry() private readonly client: SentryService,
     private readonly httpService: HttpService,
+    private readonly mailerService: MailerService,
   ) {}
 
   sendMessage(
@@ -27,6 +29,20 @@ export class ApiService {
           },
         ),
       );
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
+  }
+
+  async sendEmail(name: string, email: string, code: number) {
+    try {
+      this.mailerService.sendMail({
+        to: email,
+        from: 'no-reply@sanjaya.com',
+        subject: 'Testing nodemailer and sendinblue',
+        text: code.toString(),
+      });
     } catch (error) {
       this.client.instance().captureException(error);
       throw error;

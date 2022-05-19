@@ -1,10 +1,14 @@
 import {
   Body,
+  CACHE_MANAGER,
   Controller,
   Get,
   HttpException,
+  HttpStatus,
+  Inject,
   Post,
   Put,
+  Query,
   Req,
   Res,
   UploadedFile,
@@ -25,7 +29,7 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { CreateRatingDto } from '../rating/dto/create-rating.dto';
 import { RatingService } from '../rating/rating.service';
 import { EditTransactionParamDto } from '../transaction/dto/edit-transaction-params.dto';
-import { User, UserDocument } from '../user/model/user.model';
+import { UserDocument } from '../user/model/user.model';
 import { RefreshRequestDto } from '../user/dto/refresh-request.dto';
 import { SanitizeMongooseModelInterceptor } from 'nestjs-mongoose-exclude';
 import { AuthService } from '../auth/auth.service';
@@ -37,23 +41,9 @@ import { extname } from 'path';
 import { Status } from '../transaction/model/transaction.model';
 import { ApiService } from './api.service';
 import { CheckEmailDto } from '../user/dto/check-email.dto';
-
-export interface AuthenticationPayload {
-  user: User;
-  payload: {
-    type: string;
-    token: string;
-    refresh_token?: string;
-    telegram_key: string;
-    chat_id: string;
-  };
-}
-
-interface payloadJWT {
-  name: string;
-  email: string;
-  id: string;
-}
+import { AuthenticationPayload, payloadJWT } from './api.interfaces';
+import { Cache } from 'cache-manager';
+import { ApiQueryDto, SendEmailDto } from './api.dto';
 
 @UseInterceptors(new SanitizeMongooseModelInterceptor())
 @Controller('api/v1')
@@ -66,6 +56,7 @@ export class ApiController {
     private readonly transactionService: TransactionService,
     private readonly ratingService: RatingService,
     private readonly apiService: ApiService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   private buildResponsePayload(
@@ -109,7 +100,10 @@ export class ApiController {
       fileFilter: (req, file, callback) => {
         if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
           return callback(
-            new HttpException('Only image files are allowed!', 400),
+            new HttpException(
+              'Only image files are allowed!',
+              HttpStatus.BAD_REQUEST,
+            ),
             false,
           );
         }
@@ -119,16 +113,28 @@ export class ApiController {
   )
   async registerNewUser(
     @Body() user: CreateUserDto,
+    @Query() query: ApiQueryDto,
     @UploadedFile() file: Express.Multer.File,
     @Res() res: Response,
   ) {
     try {
+      const isLegit = await this.cacheManager.get<number>(query.pre);
+      if (isLegit === null)
+        throw new HttpException('Token Not Exist', HttpStatus.FORBIDDEN);
+      if (query.code !== isLegit)
+        throw new HttpException(
+          'Verification Code Wrong',
+          HttpStatus.BAD_REQUEST,
+        );
       if (file !== undefined) {
         user.photoPath = `/images/${file.filename}`;
       }
       const isEmailRegistered = await this.userService.checkEmail(user.email);
       if (isEmailRegistered !== null)
-        throw new HttpException('Email already been registered', 400);
+        throw new HttpException(
+          'Email already been registered',
+          HttpStatus.BAD_REQUEST,
+        );
       const newUser = await this.userService.register(user);
       const token = this.authService.createToken(newUser);
       const refresh = await this.authService.generateRefreshToken(
@@ -155,7 +161,10 @@ export class ApiController {
         user == null ||
         !bcrypt.compareSync(credential.password, user.password)
       )
-        throw new HttpException('email or password is wrong', 400);
+        throw new HttpException(
+          'email or password is wrong',
+          HttpStatus.BAD_REQUEST,
+        );
 
       const token = this.authService.createToken(user);
       const refresh = await this.authService.generateRefreshToken(
@@ -205,7 +214,11 @@ export class ApiController {
       const foodsList = await Promise.all(
         body.food.map((id) => {
           const food = this.foodService.getById(id);
-          if (food == null) throw new HttpException("Food does'nt exist", 400);
+          if (food == null)
+            throw new HttpException(
+              "Food does'nt exist",
+              HttpStatus.BAD_REQUEST,
+            );
           return food;
         }),
       );
@@ -269,7 +282,10 @@ export class ApiController {
       const userTransactions =
         await this.transactionService.getTransactionByUserId(payload.id);
       if (userTransactions.length === 0)
-        throw new HttpException('User or Transaction Not Found', 404);
+        throw new HttpException(
+          'User or Transaction Not Found',
+          HttpStatus.NOT_FOUND,
+        );
       const total = userTransactions
         .filter((val) => val.food.status === Status.Bayar)
         .reduce(
@@ -298,11 +314,14 @@ export class ApiController {
         this.foodService.getById(body.foodId),
       ]);
       if (data[0] === null)
-        throw new HttpException('User or Order not found', 404);
+        throw new HttpException(
+          'User or Order not found',
+          HttpStatus.NOT_FOUND,
+        );
       if (data[0].food.status !== 'Belum_Bayar')
         throw new HttpException(
           "Food already been paid/cooked/delivered/canceled, sorry you can't cancel this order",
-          400,
+          HttpStatus.BAD_REQUEST,
         );
       const result = await Promise.all([
         this.foodService.updateFoodOrder(
@@ -345,13 +364,14 @@ export class ApiController {
       if (data[0] == null)
         throw new HttpException(
           "You already rated this food or user doesn't exist",
-          400,
+          HttpStatus.BAD_REQUEST,
         );
-      if (data[1] == null) throw new HttpException("food doesn't exist", 400);
+      if (data[1] == null)
+        throw new HttpException("food doesn't exist", HttpStatus.BAD_REQUEST);
       if (data[2])
         throw new HttpException(
           "You already rated this food or user doesn't exist",
-          400,
+          HttpStatus.BAD_REQUEST,
         );
       const newRate =
         (data[1].rate * data[1].rateCount + body.rate) /
@@ -386,14 +406,20 @@ export class ApiController {
       ]);
       if (user[0].email !== user[1].email)
         if (user[1].email !== null)
-          throw new HttpException('Email already been registered', 400);
+          throw new HttpException(
+            'Email already been registered',
+            HttpStatus.BAD_REQUEST,
+          );
       if (user[0] == null || user[0].role !== 'user')
-        throw new HttpException('User Not Existed or Old Password Wrong', 400);
+        throw new HttpException(
+          'User Not Existed or Old Password Wrong',
+          HttpStatus.BAD_REQUEST,
+        );
       if (body.oldPassword !== null) {
         if (!bcrypt.compareSync(body.oldPassword, user[0].password))
           throw new HttpException(
             'User Not Existed or Old Password Wrong',
-            400,
+            HttpStatus.BAD_REQUEST,
           );
       }
 
@@ -405,13 +431,42 @@ export class ApiController {
   }
 
   @Post('check-email')
+  @UseGuards(ThrottlerGuard)
   @Public()
   async checkEmail(@Body() body: CheckEmailDto, @Res() res: Response) {
     try {
-      const isEmailExist = await this.userService.checkEmail(body.email);
-      if (isEmailExist !== null)
-        return res.status(200).json({ isEmailExist: true });
-      return res.status(200).json({ isEmailExist: false });
+      const data = await this.userService.checkEmail(body.email);
+      if (data !== null)
+        return res.status(200).json({ isEmailExist: true, pre: '' });
+      const key = crypto.randomBytes(16).toString('hex');
+      const value = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+      await this.cacheManager.set<number>(key, value, { ttl: 150 });
+      return res.status(200).json({ isEmailExist: false, pre: key });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('send-code')
+  @UseGuards(ThrottlerGuard)
+  @Public()
+  async sendVerifCode(@Body() body: SendEmailDto, @Res() res: Response) {
+    try {
+      const isLegit = await this.cacheManager.get<number>(body.pre);
+      if (isLegit == null)
+        throw new HttpException(
+          'Token expired, please register again.',
+          HttpStatus.FORBIDDEN,
+        );
+      const key = crypto.randomBytes(16).toString('hex');
+      const value = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+      await Promise.all([
+        this.cacheManager.del(body.pre),
+        this.cacheManager.set<number>(key, value, { ttl: 600 }),
+        this.apiService.sendEmail(body.name, body.email, value),
+      ]);
+      //! Lakukan operasi pengiriman email
+      return res.status(200).json({ pre: key });
     } catch (error) {
       throw error;
     }
