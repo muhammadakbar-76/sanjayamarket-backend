@@ -35,7 +35,7 @@ export class ApiService {
     }
   }
 
-  async sendEmail(name: string, email: string, code: number) {
+  sendEmail(name: string, email: string, code: number) {
     try {
       this.mailerService.sendMail({
         to: email,

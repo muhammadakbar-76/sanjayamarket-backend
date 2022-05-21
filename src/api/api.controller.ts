@@ -118,7 +118,7 @@ export class ApiController {
     @Res() res: Response,
   ) {
     try {
-      const isLegit = await this.cacheManager.get<number>(query.pre);
+      const isLegit = await this.cacheManager.get(query.pre);
       if (isLegit === null)
         throw new HttpException('Token Not Exist', HttpStatus.FORBIDDEN);
       console.log(isLegit);
@@ -464,7 +464,7 @@ export class ApiController {
       const value = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
       await Promise.all([
         this.cacheManager.del(body.pre),
-        this.cacheManager.set<number>(key, value, { ttl: 1800 }),
+        this.cacheManager.set(key, value, { ttl: 1800 }),
         this.apiService.sendEmail(body.name, body.email, value),
       ]);
       //! Lakukan operasi pengiriman email
