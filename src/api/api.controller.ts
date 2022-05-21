@@ -121,9 +121,7 @@ export class ApiController {
       const isLegit = await this.cacheManager.get(query.pre);
       if (isLegit === undefined)
         throw new HttpException('Token Not Exist', HttpStatus.FORBIDDEN);
-      if (query.code !== Number(isLegit)) {
-        console.log(typeof isLegit, typeof query.code);
-        console.log(isLegit, query.code);
+      if (Number(query.code) !== Number(isLegit)) {
         throw new HttpException(
           'Verification Code Wrong',
           HttpStatus.BAD_REQUEST,
