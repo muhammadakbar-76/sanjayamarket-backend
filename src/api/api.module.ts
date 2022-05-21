@@ -23,6 +23,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
     CacheModule.register(),
     MailerModule.forRoot({
       transport: `${process.env.SMTP_TRANSPORT_STRING}`,
+      defaults: {
+        from: '"nest-modules" <modules@nestjs.com>',
+      },
     }),
   ],
   controllers: [ApiController],
