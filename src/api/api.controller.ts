@@ -119,15 +119,15 @@ export class ApiController {
   ) {
     try {
       const isLegit = await this.cacheManager.get(query.pre);
-      if (isLegit === null)
+      if (isLegit === undefined)
         throw new HttpException('Token Not Exist', HttpStatus.FORBIDDEN);
       console.log(isLegit);
-      if (query.code !== isLegit)
+      if (query.code !== Number(isLegit))
         throw new HttpException(
           'Verification Code Wrong',
           HttpStatus.BAD_REQUEST,
         );
-      await this.cacheManager.del(query.pre);
+      await this.cacheManager.reset();
       if (file !== undefined) {
         user.photoPath = `/images/${file.filename}`;
       }
@@ -455,7 +455,7 @@ export class ApiController {
   async sendVerifCode(@Body() body: SendEmailDto, @Res() res: Response) {
     try {
       const isLegit = await this.cacheManager.get<number>(body.pre);
-      if (isLegit == null)
+      if (isLegit == undefined)
         throw new HttpException(
           'Token expired, please register again.',
           HttpStatus.FORBIDDEN,
