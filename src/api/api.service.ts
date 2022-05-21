@@ -40,7 +40,7 @@ export class ApiService {
       this.mailerService.sendMail({
         to: email,
         from: 'no-reply@sanjaya.com',
-        subject: 'Testing nodemailer and sendinblue',
+        subject: 'Testing nodemailer',
         text: code.toString(),
       });
     } catch (error) {
