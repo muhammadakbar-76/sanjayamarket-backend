@@ -39,7 +39,7 @@ export class ApiService {
     try {
       this.mailerService.sendMail({
         to: email,
-        from: 'no-reply@sanjaya.com',
+        from: 'noreply@sanjaya.com',
         subject: 'Testing nodemailer',
         text: code.toString(),
       });

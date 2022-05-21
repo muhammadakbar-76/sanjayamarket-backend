@@ -121,11 +121,13 @@ export class ApiController {
       const isLegit = await this.cacheManager.get<number>(query.pre);
       if (isLegit === null)
         throw new HttpException('Token Not Exist', HttpStatus.FORBIDDEN);
+      console.log(isLegit);
       if (query.code !== isLegit)
         throw new HttpException(
           'Verification Code Wrong',
           HttpStatus.BAD_REQUEST,
         );
+      await this.cacheManager.del(query.pre);
       if (file !== undefined) {
         user.photoPath = `/images/${file.filename}`;
       }
@@ -462,7 +464,7 @@ export class ApiController {
       const value = Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
       await Promise.all([
         this.cacheManager.del(body.pre),
-        this.cacheManager.set<number>(key, value, { ttl: 600 }),
+        this.cacheManager.set<number>(key, value, { ttl: 1800 }),
         this.apiService.sendEmail(body.name, body.email, value),
       ]);
       //! Lakukan operasi pengiriman email
