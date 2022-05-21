@@ -122,11 +122,13 @@ export class ApiController {
       if (isLegit === undefined)
         throw new HttpException('Token Not Exist', HttpStatus.FORBIDDEN);
       console.log(isLegit);
-      if (query.code !== Number(isLegit))
+      if (query.code !== Number(isLegit)) {
+        console.log(typeof isLegit, typeof query.code);
         throw new HttpException(
           'Verification Code Wrong',
           HttpStatus.BAD_REQUEST,
         );
+      }
       await this.cacheManager.reset();
       if (file !== undefined) {
         user.photoPath = `/images/${file.filename}`;
