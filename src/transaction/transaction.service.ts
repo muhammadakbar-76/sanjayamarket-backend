@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { EditTransactionParamDto } from './dto/edit-transaction-params.dto';
 import { SaveTransactionDto } from './dto/save-transaction.dto';
 import { Order, OrderDocument } from './model/order.model';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class TransactionService {
@@ -187,6 +188,20 @@ export class TransactionService {
   changeOrderProgress(id: string, progress: boolean) {
     try {
       return this.orderRepo.findByIdAndUpdate(id, { isOnProgress: progress });
+    } catch (error) {
+      this.client.instance().captureException(error);
+      throw error;
+    }
+  }
+
+  sendNotification(fcmToken: string, payload: { body: string; title: string }) {
+    try {
+      return admin.messaging().sendToDevice(fcmToken, {
+        notification: {
+          body: payload.body,
+          title: payload.title,
+        },
+      });
     } catch (error) {
       this.client.instance().captureException(error);
       throw error;

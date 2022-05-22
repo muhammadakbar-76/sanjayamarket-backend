@@ -385,4 +385,30 @@ $(document).ready(function () {
       }
     });
   });
+
+  $('.dropdown-item.change-all-status').on('click', function (e) {
+    e.preventDefault();
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, change it!',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          icon: 'success',
+          title: 'All Transaction Status has been changed',
+          showConfirmButton: false,
+          timer: 2000,
+        }).then((result) => {
+          if (result.dismiss === Swal.DismissReason.timer) {
+            $(`#${$(this).data('id')}`).submit();
+          }
+        });
+      }
+    });
+  });
 });

@@ -14,12 +14,17 @@ import * as crypto from 'crypto';
 import * as cookieParser from 'cookie-parser';
 import { NextFunction, Request, Response } from 'express';
 import { TimeoutInterceptor } from './utilities/interceptors/timeout.interceptor';
+import * as admin from 'firebase-admin';
 
 const flash = require('connect-flash');
 const MongoStore = require('connect-mongo');
+const firebaseConfig = require('../firebase-config.json');
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  admin.initializeApp({
+    credential: admin.credential.cert(firebaseConfig),
+  });
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalInterceptors(new TimeoutInterceptor());

@@ -24,6 +24,14 @@ import { AuthenticatedGuard } from '../auth/authenticated.guard';
 import { EditTransactionDto } from './dto/edit-transaction.dto';
 import { StatusQueryDto } from './dto/status-query.dto';
 
+const firebasePayload = {
+  [Status.Bayar]: 'You need to pay!',
+  [Status.Cancel]: 'Your order has been canceled by ud',
+  [Status.Cooking]: 'Your order has been accepted',
+  [Status.Deliver]: 'Our courier will deliver your order',
+  [Status.Finish]: 'Thank you for your order, enjoy the food!',
+};
+
 @Controller('transaction')
 @UseGuards(AuthenticatedGuard)
 @UseFilters(new HttpExceptionFilter('/auth/login'))
@@ -329,6 +337,47 @@ export class TransactionController {
         false,
       );
     req.flash('success', 'Status changed successfully');
+    return res.redirect('/transaction/orders-on-progress');
+  }
+
+  @Put('order/all/:id')
+  @UseFilters(new HttpExceptionFilter('/transaction/orders'))
+  async changeAllStatusTransaction(
+    @Param() statusParam: OrderParams,
+    @Query() query: StatusQueryDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const order = await Promise.all([
+      this.transactionService.getOrderById(statusParam.id, true),
+      this.transactionService.getOrderById(statusParam.id),
+    ]);
+    if (order === null) throw new HttpException('Order Not Found', 404);
+    await Promise.all([
+      ...order[0].transactions.map((transaction) => {
+        const result = this.transactionService.updateTransactionStatus(
+          transaction.toString(),
+          query.status,
+        );
+        return result;
+      }),
+      this.transactionService.sendNotification(
+        order[1].transactions[0].user.fcmToken,
+        {
+          body: firebasePayload[query.status],
+          title: query.status,
+        },
+      ),
+    ]);
+    const isFinished = order[1].transactions.filter(
+      (transaction) =>
+        transaction.food.status !== Status.Cancel &&
+        transaction.food.status !== Status.Finish,
+    );
+
+    if (isFinished.length === 0)
+      await this.transactionService.changeOrderProgress(statusParam.id, false);
+    req.flash('success', 'All status changed successfully');
     return res.redirect('/transaction/orders-on-progress');
   }
 }
