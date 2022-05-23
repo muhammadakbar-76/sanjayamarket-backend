@@ -4,7 +4,9 @@ import {
   Delete,
   Get,
   HttpException,
+  HttpStatus,
   Param,
+  Post,
   Put,
   Query,
   Render,
@@ -166,7 +168,7 @@ export class TransactionController {
   }
 
   @Get('order/detail/:id')
-  @UseFilters(new HttpExceptionFilter('transaction/orders'))
+  @UseFilters(new HttpExceptionFilter('/transaction/orders'))
   @Render('transaction/order_detail_page')
   async getOrderDetailPage(@Param() orderParam: OrderParams) {
     const order = await this.transactionService.getOrderById(orderParam.id);
@@ -199,7 +201,7 @@ export class TransactionController {
   }
 
   @Get('orders-on-progress')
-  @UseFilters(new HttpExceptionFilter('transaction/orders-on-progress'))
+  @UseFilters(new HttpExceptionFilter('/transaction/orders-on-progress'))
   @Render('transaction/orders_on_progress')
   async showOnProgressOrderPage(@Req() req: Request & any) {
     const message = req.flash('message');
@@ -228,6 +230,7 @@ export class TransactionController {
       success,
       orders: data[0],
       payments,
+      status: Object.values(Status),
       csrfToken: req.csrfToken(),
     };
   }
@@ -267,7 +270,7 @@ export class TransactionController {
   }
 
   @Delete('order/:id')
-  @UseFilters(new HttpExceptionFilter('/orders'))
+  @UseFilters(new HttpExceptionFilter('/transaction/orders'))
   async deleteOrder(
     @Param() orderParam: OrderParams,
     @Req() req: Request,
@@ -306,7 +309,7 @@ export class TransactionController {
   }
 
   @Put('order/:id')
-  @UseFilters(new HttpExceptionFilter('/transaction/orders'))
+  @UseFilters(new HttpExceptionFilter('/transaction/orders-on-progress'))
   async changeStatusTransaction(
     @Param() statusParam: OrderParams,
     @Query() query: StatusQueryDto,
@@ -341,7 +344,7 @@ export class TransactionController {
   }
 
   @Put('order/all/:id')
-  @UseFilters(new HttpExceptionFilter('/transaction/orders'))
+  @UseFilters(new HttpExceptionFilter('/transaction/orders-on-progress'))
   async changeAllStatusTransaction(
     @Param() statusParam: OrderParams,
     @Query() query: StatusQueryDto,
@@ -378,6 +381,28 @@ export class TransactionController {
     if (isFinished.length === 0)
       await this.transactionService.changeOrderProgress(statusParam.id, false);
     req.flash('success', 'All status changed successfully');
+    return res.redirect('/transaction/orders-on-progress');
+  }
+
+  @Post('notify/:id')
+  @UseFilters(new HttpExceptionFilter('/transaction/orders-on-progress'))
+  async sendNotif(
+    @Param() orderParam: OrderParams,
+    @Query() query: StatusQueryDto,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    const order = await this.transactionService.getOrderById(orderParam.id);
+    if (order === null)
+      throw new HttpException('Order not found', HttpStatus.NOT_FOUND);
+    await this.transactionService.sendNotification(
+      order.transactions[0].user.fcmToken,
+      {
+        body: firebasePayload[query.status],
+        title: query.status,
+      },
+    );
+    req.flash('success', 'User has been notified!');
     return res.redirect('/transaction/orders-on-progress');
   }
 }

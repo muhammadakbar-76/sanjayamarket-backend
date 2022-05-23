@@ -411,4 +411,30 @@ $(document).ready(function () {
       }
     });
   });
+
+  $('.dropdown-item.notify').on('click', function (e) {
+    e.preventDefault();
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'A certain user will get notification',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, Notif him/her!',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          icon: 'success',
+          title: 'User has been notified',
+          showConfirmButton: false,
+          timer: 2000,
+        }).then((result) => {
+          if (result.dismiss === Swal.DismissReason.timer) {
+            $(`#${$(this).data('id')}`).submit();
+          }
+        });
+      }
+    });
+  });
 });

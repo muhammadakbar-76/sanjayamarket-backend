@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" style="overflow-x: hidden;">
     <div class="row">
         <h4 class="font-weight-bolder mb-3">Orders that need to take care off</h4>
         <% if (message.length > 0) { %>
@@ -32,38 +32,31 @@
                           <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#<%= `collapse-${i}` %>" aria-expanded="true" aria-controls="<%= `collapse-${i}` %>">
                             Order ID : <%= order.id %> 
                           </button>
-                          <button class="btn bg-gradient-info mt-2 me-2">Notify!</button>
+                          <div class="dropdown">
+                            <button class="btn bg-gradient-info mt-2 me-2 dropdown-toggle" type="button" id=<%= `notify-${i}` %> data-bs-toggle="dropdown" aria-expanded="false">Notify!</button>
+                            <ul class="dropdown-menu" aria-labelledby="<%= `notify-${i}` %>">
+                              <% status.forEach(elem => { %>
+                                <li>
+                                  <form action="/transaction/notify/<%= order.id %>?status=<%= elem %>&_csrf=<%= csrfToken %>" id="<%= `${elem}-notify-${i}` %>" method="post">
+                                    <button type="submit" class="dropdown-item notify" data-id="<%= `${elem}-notify-${i}` %>"><%= elem %></button>
+                                  </form>
+                                </li> 
+                              <% }) %>
+                            </ul>
+                          </div>
                         </h2>
                         <div id="<%= `collapse-${i}` %>" class="accordion-collapse collapse" aria-labelledby="<%= `heading-${i}` %>" data-bs-parent="#accordionExample">
                           <div class="accordion-body bg bg-gradient-secondary pt-4 rounded">
                             <div class="dropdown">
                               <button class="btn bg-gradient-danger mb-3 dropdown-toggle" type="button" id="<%= `dropdown-all-${i}` %>" data-bs-toggle="dropdown" aria-expanded="false">Change All Status</button>
                               <ul class="dropdown-menu" aria-labelledby="<%= `dropdown-all-${i}` %>">
-                                <li>
-                                    <form action="/transaction/order/all/<%= order.id %>?_method=PUT&status=Belum_Bayar&_csrf=<%= csrfToken %>" id="<%= `bayar-all-${i}` %>" method="post">
-                                      <button type="submit" class="dropdown-item change-all-status" data-id="<%= `bayar-all-${i}` %>">Belum Bayar</button>
-                                  </form>
-                                </li> 
-                                <li>
-                                  <form action="/transaction/order/all/<%= order.id %>?_method=PUT&status=Cooking&_csrf=<%= csrfToken %>" id="<%= `cooking-all-${i}` %>" method="post">
-                                    <button type="submit" class="dropdown-item change-all-status" data-id="<%= `cooking-all-${i}` %>">Cooking</button>
-                                </form>
-                              </li>
-                              <li>
-                                  <form action="/transaction/order/all/<%= order.id %>?_method=PUT&status=Delivering&_csrf=<%= csrfToken %>" id="<%= `deliver-all` %>" method="post">
-                                    <button type="submit" class="dropdown-item change-all-status" data-id="<%= `deliver-all` %>">Delivering</button>
-                                </form>
-                              </li>
-                              <li>
-                                  <form action="/transaction/order/all/<%= order.id %>?_method=PUT&status=Canceled&_csrf=<%= csrfToken %>" id="<%= `cancel-all-${i}` %>" method="post">
-                                    <button type="submit" class="dropdown-item change-all-status" data-id="<%= `cancel-all-${i}` %>">Cancel</button>
-                                </form>
-                              </li>
-                              <li>
-                                  <form action="/transaction/order/all/<%= order.id %>?_method=PUT&status=Finished&_csrf=<%= csrfToken %>" id="<%= `finish-all-${i}` %>" method="post">
-                                    <button type="submit" class="dropdown-item change-all-status" data-id="<%= `finish-all-${i}` %>">Finish</button>
-                                </form>
-                              </li> 
+                                <% status.forEach(elem => { %>
+                                  <li>
+                                    <form action="/transaction/order/all/<%= order.id %>?_method=PUT&status=<%= elem %>&_csrf=<%= csrfToken %>" id="<%= `${elem}-all-${i}` %>" method="post">
+                                      <button type="submit" class="dropdown-item change-all-status" data-id="<%= `${elem}-all-${i}` %>"><%= elem %></button>
+                                    </form>
+                                  </li> 
+                                <% }) %>
                               </ul>
                             </div>
                             <% order.transactions.forEach(el => { %>
@@ -91,31 +84,13 @@
                                             Status
                                             </button>
                                             <ul class="dropdown-menu" aria-labelledby="<%= `dropdown-${i}` %>">
-                                              <li>
-                                                  <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Belum_Bayar&_csrf=<%= csrfToken %>" id="bayar-<%= el.id %>" method="post">
-                                                    <button type="submit" class="dropdown-item change-status" data-id="bayar-<%= el.id %>">Belum Bayar</button>
-                                                </form>
-                                              </li> 
-                                              <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Cooking&_csrf=<%= csrfToken %>" id="cooking-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="cooking-<%= el.id %>">Cooking</button>
-                                              </form>
-                                            </li>
-                                            <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Delivering&_csrf=<%= csrfToken %>" id="deliver-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="deliver-<%= el.id %>">Delivering</button>
-                                              </form>
-                                            </li>
-                                            <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Canceled&_csrf=<%= csrfToken %>" id="cancel-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="cancel-<%= el.id %>">Cancel</button>
-                                              </form>
-                                            </li>
-                                            <li>
-                                                <form action="/transaction/order/<%= el.id %>?_method=PUT&status=Finished&_csrf=<%= csrfToken %>" id="finish-<%= el.id %>" method="post">
-                                                  <button type="submit" class="dropdown-item change-status" data-id="finish-<%= el.id %>">Finish</button>
-                                              </form>
-                                            </li> 
+                                              <% status.forEach(elem => { %>
+                                                <li>
+                                                  <form action="/transaction/order/<%= el.id %>?_method=PUT&status=<%= elem %>&_csrf=<%= csrfToken %>" id="<%= elem %>-<%= el.id %>" method="post">
+                                                    <button type="submit" class="dropdown-item change-status" data-id="<%= elem %>-<%= el.id %>"><%= elem %></button>
+                                                  </form>
+                                                </li>
+                                              <% }) %>
                                             </ul>
                                           </div>
                                         </div>
