@@ -99,7 +99,7 @@ export class UserService {
       return this.refreshRepo.create({
         user: userId,
         is_revoked: false,
-        expires: expiration,
+        expireAt: expiration,
       });
     } catch (error) {
       this.client.instance().captureException(error);

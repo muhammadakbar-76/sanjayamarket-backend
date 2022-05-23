@@ -13,7 +13,7 @@ export class RefreshToken {
   is_revoked: boolean;
 
   @Prop({ type: SchemaTypes.Date })
-  expires: Date;
+  expireAt: Date;
 }
 
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshToken);
