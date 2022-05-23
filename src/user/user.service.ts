@@ -95,7 +95,7 @@ export class UserService {
   createRefreshToken(userId: string, ttl: number) {
     try {
       const expiration = new Date();
-      expiration.setTime(expiration.getTime() + ttl);
+      expiration.setTime(expiration.getTime() + ttl * 1000);
       return this.refreshRepo.create({
         user: userId,
         is_revoked: false,
